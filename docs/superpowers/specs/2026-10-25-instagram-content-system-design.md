@@ -65,12 +65,12 @@ Bốn file trong `rulebook/`.
 ### 4.2 voice
 - Xưng **"mình"**.
 - **Cấm:** "shop", "bên em", "nhà mình".
-- **Tiếng Anh chỉ dùng cho:** balancify, Daily Hug Bag, Find your own balance, #dailyhugbag, #balancify, tên 4 colorway. Mọi chữ còn lại bằng tiếng Việt.
-- **Bảng thay từ:** soft → mềm; cozy → êm; ngoài ra, mọi từ tiếng Anh có từ tiếng Việt tự nhiên tương đương đều bị bắt. Ngoại lệ (không có từ tiếng Việt tự nhiên): laptop, reel, story.
+- **Tiếng Anh chỉ dùng cho:** balancify, Daily Hug Bag, Find your own balance, #dailyhugbag, #balancify, tên 4 colorway, và các từ: laptop, reel, story, nylon, comment, HUG. Mọi chữ còn lại bằng tiếng Việt.
+- **Bảng thay từ:** soft → mềm; cozy → êm; ngoài ra, mọi từ tiếng Anh có từ tiếng Việt tự nhiên tương đương đều bị bắt.
 - **Không viết caption song ngữ.**
 - **Câu mẫu:**
   - "Mình không làm ra một cái túi. Mình làm ra một cái ôm mang đi được."
-  - "Ngày làm 9 tiếng, tối làm brand 3 tiếng. Cân bằng gì đâu — chỉ là chọn thứ mệt mà mình thích."
+  - "Không phải mình lười. Mình chỉ hết pin."
   - "Bạn đang mang gì trong túi đi làm? Mình đoán 80% có: cục sạc dự phòng đã hết pin."
   - "Cân bằng không phải là đứng yên. Là biết mình đang nghiêng về đâu."
 
@@ -86,7 +86,7 @@ Bốn file trong `rulebook/`.
 | not tired black | `#252728` |
 
   Màu nhấn của một bài lấy theo colorway trong thẻ ảnh. Bài có nhiều colorway (ví dụ carousel 4 màu) thì mỗi slide dùng màu của túi trên slide đó.
-- **Font:** Fraunces (tiêu đề), Be Vietnam Pro (nội dung), cộng một font viết tay cho tên colorway (mục 11).
+- **Font:** Fraunces (tiêu đề), Be Vietnam Pro (nội dung), Patrick Hand cho tên colorway (tạm, chờ font chính thức — mục 11).
 - **Logo:** balance glyph — hai nửa tròn lệch nhau, nửa trái cao hơn. Không xoay, không kéo méo, không đổi màu ngoài trắng (trên nền tối hoặc nền màu) và màu chữ đậm (trên nền sáng).
 - **Element được phép:** tên colorway bằng chữ viết tay, viết thường, xoay nghiêng, tô đúng màu túi, đặt ở cạnh ảnh.
 - **Element bị cấm:** sparkle, khung viền, sticker, gradient màu, chữ nhiều màu.
@@ -159,7 +159,7 @@ Nguyên tắc: không bao giờ bỏ qua âm thầm; mọi thứ bị loại đ�
 - **Kiểm tra kỹ thuật tự động trên mỗi ảnh xuất ra:**
   - đúng kích thước 1080×1350 / 1080×1920;
   - Story: không có chữ trong vùng 250px trên cùng và 340px dưới cùng (vùng giao diện Instagram che);
-  - độ tương phản chữ/nền ≥ 4.5:1.
+  - độ tương phản chữ/nền ≥ 4.5:1 với chữ dưới 24px, ≥ 3:1 với chữ từ 24px (WCAG).
 
 ## 10. Lưu trữ
 
