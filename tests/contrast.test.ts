@@ -13,6 +13,16 @@ describe("contrast", () => {
 
   it("đọc được màu CSS rgb() và rgba()", () => {
     expect(parseCssColor("rgb(178, 207, 234)")).toEqual([178, 207, 234]);
-    expect(parseCssColor("rgba(1, 2, 3, 0.5)")).toEqual([1, 2, 3]);
+    expect(parseCssColor("rgba(1, 2, 3, 1)")).toEqual([1, 2, 3]);
+  });
+
+  it("từ chối màu trong suốt hoặc không phải số", () => {
+    expect(() => parseCssColor("rgba(0, 0, 0, 0)")).toThrow(/trong suốt/);
+    expect(() => parseCssColor("rgb(255 255 255 / 0.2)")).toThrow(/trong suốt/);
+    expect(() => parseCssColor("rgb(50%, 0, 0)")).toThrow(Error);
+  });
+
+  it("hexToRgb từ chối chuỗi không phải hex 6 số", () => {
+    for (const bad of ["#FFF", "FFFFFF", "xanh"]) expect(() => hexToRgb(bad)).toThrow(Error);
   });
 });

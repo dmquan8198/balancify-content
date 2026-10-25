@@ -52,9 +52,10 @@ export function lintText(input: string, voice: Voice): LintIssue[] {
   }
 
   const allowedWords = new Set(voice.english_allowed.words.map((w) => w.toLowerCase()));
-  for (const token of rest.match(/\p{L}+/gu) ?? []) {
+  for (const token of rest.match(/(?<![\p{L}\p{N}])\p{L}+/gu) ?? []) {
     if (VN_DIACRITIC.test(token) || allowedWords.has(token.toLowerCase()) || VN_SYLLABLE.test(token)) continue;
-    const suggestion = voice.replacements[token.toLowerCase()];
+    const key = token.toLowerCase();
+    const suggestion = Object.hasOwn(voice.replacements, key) ? voice.replacements[key] : undefined;
     issues.push({
       rule: "english",
       severity: "error",

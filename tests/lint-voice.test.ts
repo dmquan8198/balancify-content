@@ -26,6 +26,18 @@ describe("lintText", () => {
     expect(rules("mint green era")).toEqual(["english:mint", "english:green", "english:era"]);
   });
 
+  it("không lấy gợi ý từ prototype của replacements", () => {
+    const issues = lintText("constructor", voice);
+    expect(issues).toHaveLength(1);
+    expect(issues[0].rule).toBe("english");
+    expect(issues[0].suggestion).toBeUndefined();
+  });
+
+  it("đơn vị dính sau số không bị coi là từ tiếng Anh", () => {
+    expect(lintText("giá 460k, giao 2h, 1tr thôi", voice)).toEqual([]);
+    expect(rules("ok")).toEqual(["english:ok"]);
+  });
+
   it("bắt claim bị chặn", () => {
     expect(rules("Túi chống nước nhé")).toContain("blocked_claim:chống nước");
   });
