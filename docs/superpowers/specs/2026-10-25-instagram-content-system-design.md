@@ -134,7 +134,7 @@ Mỗi họ có hai biến thể: Feed 1080×1350 và Story 1080×1920.
 3. **Duyệt 1:** hệ thống đưa 2 phương án kế hoạch (họ template, ảnh cho từng slide, chữ nháp). Người dùng chọn hoặc sửa bằng lời.
 4. Dựng, rồi kiểm tra brand.
 5. **Duyệt 2:** gói duyệt gồm ảnh Feed + Story, caption, hashtag, lý do chọn ảnh. Người dùng duyệt hoặc nhắn sửa; sửa thì quay lại bước tương ứng.
-6. Lưu thành phẩm vào Drive: `Output/<YYYY-MM-DD>-<tên-bài>/`.
+6. Gửi thành phẩm trong cuộc trò chuyện (ảnh Feed + Story từng slide, ảnh xem nhanh, caption). Không tải lên Drive: connector yêu cầu dán toàn bộ nội dung ảnh dạng base64 vào lệnh gọi, không khả thi mỗi ngày.
 7. Người dùng tự đăng lên Instagram.
 
 ## 8. Xử lý lỗi
@@ -148,8 +148,9 @@ Nguyên tắc: không bao giờ bỏ qua âm thầm; mọi thứ bị loại đ�
 | Ảnh mờ, cạnh ngắn dưới 1080px, hoặc không cắt được tỷ lệ cần mà giữ trọn túi | Ghi vào thẻ ảnh, loại khỏi kế hoạch |
 | Không đủ ảnh hợp lệ cho template | Báo, đề xuất họ template cần ít ảnh hơn |
 | Không xác định được colorway | Hỏi người dùng |
-| Chữ vi phạm voice | Tự viết lại một lần; vẫn lỗi thì đưa vào gói duyệt dưới dạng **lỗi**, kèm lý do |
+| Chữ vi phạm voice | Tự viết lại một lần. Lỗi voice trong caption **chặn ngay ở bước kiểm tra kế hoạch** (chặt hơn bản đầu: không đưa vào gói duyệt dưới dạng lỗi); chỉ chữ trên ảnh mới được ghi vào gói duyệt dưới dạng **lỗi**, kèm lý do |
 | Claim ngoài "thông tin sản phẩm được phép nói" | Chặn cứng, không tự viết lại |
+| Thư mục `--out` của `npm run post` | Chỉ được thay thế khi chưa có, rỗng, hoặc là gói duyệt cũ (có tệp `.post-pack`); thư mục khác bị từ chối, không đụng tới. Không bao giờ là thư mục hiện tại, thư mục cha, thư mục người dùng hay thư mục gốc; ảnh nguồn không được nằm trong `--out`; kết quả dựng ở thư mục tạm và chỉ thay vào khi mọi slide thành công |
 | Chữ tràn khung | Giảm cỡ chữ đến mức tối thiểu của template; vẫn tràn thì rút gọn câu |
 
 ## 9. Kiểm tra chất lượng
@@ -166,7 +167,8 @@ Nguyên tắc: không bao giờ bỏ qua âm thầm; mọi thứ bị loại đ�
 
 | Loại | Nơi lưu |
 |---|---|
-| Ảnh gốc, reference, thành phẩm | Google Drive |
+| Ảnh gốc, reference | Google Drive |
+| Ảnh làm việc và thành phẩm của từng bài | Thư mục scratchpad của session (`posts/<ngày>-<tên-bài>/`), gửi cho người dùng qua cuộc trò chuyện |
 | Rulebook, đặc tả, template, code, test, ảnh chuẩn để so sánh | Repo `balancify-content` |
 
 Container của session bị xoá sau khi ngừng dùng, nên không có gì quan trọng được chỉ nằm trong container.
@@ -185,7 +187,7 @@ Container của session bị xoá sau khi ngừng dùng, nên không có gì qua
 ## 12. Rủi ro đã biết
 
 - **Giới hạn tải ảnh của connector Drive** (khoảng 4MB/file; file 8–9MB đã lỗi khi thử). Ảnh gốc điện thoại thường vượt mức này. Cách giảm: folder ảnh xuất ở chất lượng vừa, hoặc gửi trực tiếp.
-- **Tải file lên Drive chưa được kiểm chứng** qua connector. Nếu không được, thành phẩm được gửi trực tiếp trong cuộc trò chuyện.
+- **Không tải thành phẩm lên Drive** (đã kiểm chứng: connector cần nội dung base64 trong lệnh gọi). Thành phẩm gửi trong cuộc trò chuyện.
 - **Tải font từ internet** có thể bị proxy chặn; nếu vậy, font được lưu sẵn trong repo (cả hai font đề xuất đều có giấy phép mở).
 
 ## 13. Ngoài phạm vi bản đầu
