@@ -1,3 +1,4 @@
+import { existsSync } from "node:fs";
 import sharp, { type Metadata } from "sharp";
 
 export class PhotoError extends Error {}
@@ -18,6 +19,8 @@ export async function preparePhoto(input: string | Buffer, width: number, height
   if (!Number.isFinite(focus.x) || !Number.isFinite(focus.y)) {
     throw new PhotoError(`Điểm lấy nét không hợp lệ (x=${focus.x}, y=${focus.y}); cần là số từ 0 đến 1.`);
   }
+
+  if (typeof input === "string" && !existsSync(input)) throw new PhotoError(`Không tìm thấy file ảnh: ${input}`);
 
   let meta: Metadata;
   try {

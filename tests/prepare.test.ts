@@ -85,4 +85,10 @@ describe("preparePhoto", () => {
     const [r, g, b] = await pixel(out, 0, 0);
     expect(Math.min(r, g, b)).toBeGreaterThan(245);
   });
+
+  it("báo PhotoError khi không có file ảnh", async () => {
+    const err = await preparePhoto("/khong/co/anh.jpg", 1080, 1350).catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(PhotoError);
+    expect((err as Error).message).toBe("Không tìm thấy file ảnh: /khong/co/anh.jpg");
+  });
 });
