@@ -54,7 +54,10 @@ export async function renderHtml(html: string, width: number, height: number, re
 
     const textBoxes = await page.$$eval("[data-text]", (els) =>
       els.map((el) => {
-        const r = el.getBoundingClientRect();
+        // Range over the contents, not the element box: text can overflow a fixed-width element.
+        const rg = document.createRange();
+        rg.selectNodeContents(el);
+        const r = rg.getBoundingClientRect();
         const cs = getComputedStyle(el);
         return {
           id: el.getAttribute("data-text") ?? "",

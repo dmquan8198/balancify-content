@@ -17,7 +17,10 @@ describe("renderHtml", () => {
     const meta = await sharp(r.png).metadata();
     expect([meta.width, meta.height]).toEqual([1080, 1350]);
     expect(r.textBoxes).toHaveLength(1);
-    expect(r.textBoxes[0]).toMatchObject({ id: "t", x: 100, y: 200, color: "rgb(255, 255, 255)", fontSizePx: 40, text: "Tiếng Việt" });
+    // Box hugs the glyph run, so it may sit a pixel or two inside the line box.
+    expect(r.textBoxes[0].y).toBeGreaterThanOrEqual(198);
+    expect(r.textBoxes[0].y).toBeLessThanOrEqual(204);
+    expect(r.textBoxes[0]).toMatchObject({ id: "t", x: 100, color: "rgb(255, 255, 255)", fontSizePx: 40, text: "Tiếng Việt" });
   });
 
   it("ảnh nền không chứa chữ", async () => {
@@ -68,5 +71,16 @@ describe("renderHtml glyphMask", () => {
     let dark = 0;
     for (let i = 0; i < data.length; i += info.channels) if (data[i] < 128) dark++;
     expect(dark).toBeGreaterThan(1000);
+  });
+});
+
+describe("renderHtml text boxes", () => {
+  it("khối chữ bao trọn chữ tràn ra ngoài phần tử", async () => {
+    const r = await renderHtml(
+      page(`<div data-text="t" style="position:absolute;left:10px;top:10px;width:100px;white-space:nowrap;font-size:30px;color:#fff">Một dòng chữ rất dài tràn ra ngoài</div>`),
+      1080,
+      400,
+    );
+    expect(r.textBoxes[0].width).toBeGreaterThan(100);
   });
 });
