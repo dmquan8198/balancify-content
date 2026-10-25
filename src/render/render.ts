@@ -52,6 +52,24 @@ export async function renderHtml(html: string, width: number, height: number, re
     }, requiredFonts);
     if (missing.length > 0) throw new FontLoadError(`Không tải được font: ${missing.join(", ")}`);
 
+    if (requiredFonts.length > 0) {
+      // A loaded @font-face is not enough: a misspelled family or missing weight silently falls back.
+      const fallback = await page.$$eval(
+        "[data-text]",
+        (els, families) =>
+          els.flatMap((el) => {
+            const cs = getComputedStyle(el);
+            const first = cs.fontFamily.split(",")[0].trim().replace(/^["']|["']$/g, "");
+            const ok = families.includes(first) && document.fonts.check(`${cs.fontStyle} ${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`, el.textContent ?? "");
+            return ok ? [] : [{ id: el.getAttribute("data-text") ?? "", font: `${first} ${cs.fontWeight}` }];
+          }),
+        requiredFonts,
+      );
+      if (fallback.length > 0) {
+        throw new FontLoadError(`Chữ đang dùng font dự phòng: ${fallback.map((f) => `"${f.id}" (${f.font})`).join(", ")}`);
+      }
+    }
+
     const textBoxes = await page.$$eval("[data-text]", (els) =>
       els.map((el) => {
         // Range over the contents, not the element box: text can overflow a fixed-width element.

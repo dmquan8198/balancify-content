@@ -1,6 +1,8 @@
 import sharp from "sharp";
 import { afterAll, describe, expect, it } from "vitest";
 import { closeBrowser, FontLoadError, renderHtml } from "../src/render/render";
+import { loadRulebook } from "../src/rulebook/load";
+import { fontFaceCss } from "../src/templates/fonts";
 
 afterAll(closeBrowser);
 
@@ -82,5 +84,20 @@ describe("renderHtml text boxes", () => {
       400,
     );
     expect(r.textBoxes[0].width).toBeGreaterThan(100);
+  });
+});
+
+describe("renderHtml font fallback", () => {
+  it("báo lỗi khi chữ rơi về font dự phòng vì sai tên font", async () => {
+    const css = fontFaceCss(loadRulebook());
+    const html = `<!doctype html><html><head><meta charset="utf-8"><style>${css}</style></head><body><div data-text="name" style="font-family:'Patrik Hand';font-size:40px">easy mint</div></body></html>`;
+    await expect(renderHtml(html, 400, 200, ["Patrick Hand"])).rejects.toThrow(FontLoadError);
+    await expect(renderHtml(html, 400, 200, ["Patrick Hand"])).rejects.toThrow(/name/);
+  });
+
+  it("font đúng tên và độ đậm thì đạt", async () => {
+    const css = fontFaceCss(loadRulebook());
+    const html = `<!doctype html><html><head><meta charset="utf-8"><style>${css}</style></head><body><div data-text="label" style="font-family:'Be Vietnam Pro';font-weight:600;font-size:26px">Daily Hug Bag</div></body></html>`;
+    await expect(renderHtml(html, 400, 200, ["Be Vietnam Pro"])).resolves.toBeTruthy();
   });
 });
