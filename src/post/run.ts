@@ -1,8 +1,10 @@
-import { mkdirSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { randomBytes } from "node:crypto";
+import { mkdirSync, renameSync, rmSync, writeFileSync } from "node:fs";
+import { join, relative, resolve } from "node:path";
 import type { PhotoCard } from "../cards/cards";
 import { contactSheet } from "../contact/sheet";
 import { runF1, type F1Report } from "../pipeline/f1";
+import { fitsFormat, orientedSize } from "../render/prepare";
 import { loadRulebook } from "../rulebook/load";
 import { joinMessages, NAME_FALLBACK_NOTE } from "./format";
 import { PlanError, validatePlan, type PlanIssue, type PostPlan } from "./plan";
@@ -24,24 +26,65 @@ export interface PostResult {
 
 const FORMAT_LABEL = { feed: "Feed", story: "Story" } as const;
 
-/** Throws PlanError (before writing anything) when the plan has errors. */
-export function checkPlan(plan: PostPlan, cards: PhotoCard[] = []): PlanIssue[] {
-  const issues = validatePlan(plan, loadRulebook(), cards);
+/**
+ * Throws PlanError (before writing anything) when the plan has errors, including photos too small
+ * for Feed or Story — measured here, so it does not depend on a cards file.
+ */
+export async function checkPlan(plan: PostPlan, cards: PhotoCard[] = []): Promise<PlanIssue[]> {
+  const rb = loadRulebook();
+  const issues = validatePlan(plan, rb, cards);
+  const shapeOk = Array.isArray(plan?.slides) && plan.slides.every((s) => typeof s?.photo === "string");
+  if (shapeOk) {
+    const { feed, story } = rb.visual.formats;
+    for (const [i, s] of plan.slides.entries()) {
+      let size: { width: number; height: number };
+      try {
+        size = await orientedSize(s.photo);
+      } catch {
+        continue; // missing or unreadable photos are already reported by validatePlan or fail clearly at render
+      }
+      for (const [name, f] of [["Feed", feed], ["Story", story]] as const) {
+        if (!fitsFormat(size.width, size.height, f.width, f.height)) {
+          issues.push({ severity: "error", message: `Slide ${i + 1}: ảnh ${size.width}×${size.height} không đủ lớn cho ${name}.` });
+        }
+      }
+    }
+  }
   const errors = issues.filter((i) => i.severity === "error");
   if (errors.length > 0) throw new PlanError(`Kế hoạch bài có ${errors.length} lỗi:\n${errors.map((e) => `- ${e.message}`).join("\n")}`);
   return issues;
 }
 
+/**
+ * Renders into a temporary sibling folder and swaps it in for `outDir` only when every slide
+ * succeeded, so a failed run leaves the previous results untouched and no stale slides remain.
+ */
 export async function runPost(plan: PostPlan, outDir: string, cards: PhotoCard[] = []): Promise<PostResult> {
-  const warnings = checkPlan(plan, cards);
+  const warnings = await checkPlan(plan, cards);
+  const finalDir = resolve(outDir);
+  const tmpDir = `${finalDir}.tmp-${randomBytes(4).toString("hex")}`;
+  mkdirSync(tmpDir, { recursive: true });
+  try {
+    const result = await build(plan, warnings, tmpDir, cards);
+    rmSync(finalDir, { recursive: true, force: true });
+    renameSync(tmpDir, finalDir);
+    const remap = (p: string) => join(finalDir, relative(tmpDir, p));
+    for (const s of result.slides) for (const f of s.report.formats) f.file = remap(f.file);
+    return { ...result, reviewFile: remap(result.reviewFile), previewFile: remap(result.previewFile), captionFile: remap(result.captionFile) };
+  } catch (e) {
+    rmSync(tmpDir, { recursive: true, force: true });
+    throw e;
+  }
+}
 
+async function build(plan: PostPlan, warnings: PlanIssue[], outDir: string, cards: PhotoCard[]): Promise<PostResult> {
   const slides: SlideResult[] = [];
   for (const [i, s] of plan.slides.entries()) {
-    const report = await runF1({ photo: s.photo, colorway: s.colorway, focus: s.focus, outDir: join(outDir, `slide-${i + 1}`) });
+    const card = cards.find((c) => resolve(c.file) === resolve(s.photo));
+    const report = await runF1({ photo: s.photo, colorway: s.colorway, focus: s.focus ?? card?.focus, outDir: join(outDir, `slide-${i + 1}`) });
     slides.push({ index: i + 1, why: s.why, report });
   }
 
-  mkdirSync(outDir, { recursive: true });
   const captionFile = join(outDir, "caption.txt");
   writeFileSync(captionFile, `${plan.caption}\n\n${plan.hashtags.join(" ")}\n`);
 
@@ -56,7 +99,7 @@ export async function runPost(plan: PostPlan, outDir: string, cards: PhotoCard[]
   const lines = [
     `# Gói duyệt — mục tiêu ${plan.goal} · trụ ${plan.pillar} · ${plan.family}`,
     "",
-    ok ? "KẾT QUẢ: ĐẠT" : "KẾT QUẢ: CÓ LỖI",
+    !ok ? "KẾT QUẢ: CÓ LỖI" : warnings.length > 0 ? `KẾT QUẢ: ĐẠT (${warnings.length} cảnh báo — xem mục Cảnh báo)` : "KẾT QUẢ: ĐẠT",
     "",
     "## Caption",
     "",
@@ -69,7 +112,7 @@ export async function runPost(plan: PostPlan, outDir: string, cards: PhotoCard[]
     lines.push(`## Slide ${s.index} — ${s.report.colorway}`, "", `Lý do chọn ảnh: ${s.why}`, "");
     for (const f of s.report.formats) {
       const status = f.checks.length === 0 ? "đạt" : joinMessages(f.checks.map((c) => c.message));
-      lines.push(`- ${FORMAT_LABEL[f.format]}: ${f.file} — ${status}${f.nameColor === "fallback" ? NAME_FALLBACK_NOTE : ""}`);
+      lines.push(`- ${FORMAT_LABEL[f.format]}: ${relative(outDir, f.file)} — ${status}${f.nameColor === "fallback" ? NAME_FALLBACK_NOTE : ""}`);
     }
     for (const issue of s.report.lint) lines.push(`- Chữ: ${issue.message}`);
     lines.push("");

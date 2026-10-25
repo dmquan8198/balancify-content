@@ -18,7 +18,7 @@ await runCli(USAGE, async () => {
   const cards = values.cards ? (JSON.parse(readFileSync(values.cards, "utf8")) as PhotoCard[]) : [];
 
   if (values.check) {
-    const warnings = checkPlan(plan, cards);
+    const warnings = await checkPlan(plan, cards);
     for (const w of warnings) console.log(`Cảnh báo: ${w.message}`);
     console.log("Kế hoạch hợp lệ.");
     return 0;
