@@ -8,6 +8,7 @@
     "fonts": "bash scripts/fetch-fonts.sh",
     "f1": "tsx src/cli/f1.ts",
     "ingest": "tsx src/cli/ingest.ts",
+    "contact": "tsx src/cli/contact.ts",
     "golden:update": "UPDATE_GOLDEN=1 vitest run tests/golden.test.ts"
   },
   "dependencies": {
