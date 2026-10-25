@@ -1,3 +1,5 @@
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { basename, dirname } from "node:path";
 import sharp from "sharp";
 
 /** A pixel counts as changed when any channel differs by more than this (0–255). */
@@ -32,4 +34,19 @@ export async function compareImages(a: Buffer, b: Buffer): Promise<ImageComparis
   }
   const changedShare = changed / total;
   return { same: changedShare <= MAX_CHANGED_SHARE, changed, total, changedShare };
+}
+
+/** Compares `actual` with the golden file; writes it instead only when `update` is set. */
+export async function checkGolden(actual: Buffer, goldenPath: string, update: boolean): Promise<{ ok: boolean; message: string }> {
+  const name = basename(goldenPath);
+  if (update) {
+    mkdirSync(dirname(goldenPath), { recursive: true });
+    writeFileSync(goldenPath, actual);
+    return { ok: true, message: `${name}: đã ghi ảnh chuẩn mới` };
+  }
+  if (!existsSync(goldenPath)) {
+    return { ok: false, message: `${name}: chưa có ảnh chuẩn — chạy \`npm run golden:update\` rồi xem ảnh trước khi commit.` };
+  }
+  const cmp = await compareImages(actual, readFileSync(goldenPath));
+  return { ok: cmp.same, message: `${name}: ${cmp.changed} điểm ảnh khác (${(cmp.changedShare * 100).toFixed(3)}%)` };
 }
