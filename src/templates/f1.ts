@@ -1,3 +1,4 @@
+import { findColorway } from "../rulebook/colorway";
 import type { Rulebook } from "../rulebook/types";
 import { fontFaceCss } from "./fonts";
 
@@ -23,8 +24,7 @@ const escapeHtml = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;")
 
 export function f1Html(rb: Rulebook, input: F1Input): TemplateOutput {
   const fmt = rb.visual.formats[input.format];
-  const colorway = rb.visual.colorways[input.colorway];
-  if (!colorway) throw new Error(`Không có colorway "${input.colorway}" trong rulebook/visual.yaml`);
+  const { name, colorway } = findColorway(rb.visual, input.colorway);
   const hand = rb.visual.fonts.handwriting;
   const label = rb.visual.fonts.body_semibold;
   const nameTop = Math.round(fmt.height * 0.62);
@@ -41,7 +41,7 @@ body{width:${fmt.width}px;height:${fmt.height}px;position:relative;overflow:hidd
 .label{position:absolute;left:56px;${labelPos};font-family:"${label.family}";font-weight:${label.weight};font-size:26px;letter-spacing:.08em;line-height:1.3;color:${rb.visual.neutrals.white}}
 </style></head><body>
 <img class="photo" src="${photo}" alt="">
-<div class="name" data-text="colorway-name">${escapeHtml(input.colorway)}</div>
+<div class="name" data-text="colorway-name">${escapeHtml(name)}</div>
 <div class="label" data-text="label">${escapeHtml(input.label ?? rb.brand.product)}</div>
 </body></html>`;
 

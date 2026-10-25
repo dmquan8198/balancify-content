@@ -90,8 +90,15 @@ describe("runF1", () => {
     }
   });
 
+  it("nhận tên colorway viết hoa hoặc có gạch nối", async () => {
+    const outDir = mkdtempSync(join(tmpdir(), "f1-"));
+    const report = await runF1({ photo: await makeFlatlayFixture(), colorway: "Easy-Mint", outDir });
+    expect(report.colorway).toBe("easy mint");
+    expect(report.formats[0].file).toBe(join(outDir, "f1-easy-mint-feed.png"));
+  });
+
   it("báo lỗi rõ khi colorway sai", async () => {
     const outDir = mkdtempSync(join(tmpdir(), "f1-"));
-    await expect(runF1({ photo: await makeFlatlayFixture(), colorway: "hot red", outDir })).rejects.toThrow(/hot red/);
+    await expect(runF1({ photo: await makeFlatlayFixture(), colorway: "hot red", outDir })).rejects.toThrow(/hot red.*easy mint/);
   });
 });

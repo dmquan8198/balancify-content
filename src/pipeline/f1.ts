@@ -4,6 +4,7 @@ import { runTechnicalChecks, type CheckIssue } from "../checks/technical";
 import { hasErrors, lintText, type LintIssue } from "../lint/voice";
 import { preparePhoto, type Focus } from "../render/prepare";
 import { renderHtml } from "../render/render";
+import { findColorway, slug } from "../rulebook/colorway";
 import { loadRulebook } from "../rulebook/load";
 import { f1Html, type FormatName } from "../templates/f1";
 
@@ -30,15 +31,7 @@ export interface F1Report {
   ok: boolean;
 }
 
-export function slug(s: string): string {
-  return s
-    .toLowerCase()
-    .replace(/đ/g, "d")
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "");
-}
+export { slug };
 
 const NAME_ID = "colorway-name";
 const NO_NAME_COLOR_WORKS =
@@ -48,7 +41,7 @@ const nameContrastIssue = (checks: CheckIssue[]) => checks.find((c) => c.check =
 
 export async function runF1(opts: F1Options): Promise<F1Report> {
   const rb = loadRulebook();
-  if (!rb.visual.colorways[opts.colorway]) throw new Error(`Không có colorway "${opts.colorway}" trong rulebook/visual.yaml`);
+  const colorway = findColorway(rb.visual, opts.colorway).name;
   const label = opts.label ?? rb.brand.product;
   const lint = lintText(label, rb.voice);
   mkdirSync(opts.outDir, { recursive: true });
@@ -58,7 +51,7 @@ export async function runF1(opts: F1Options): Promise<F1Report> {
     const fmt = rb.visual.formats[format];
     const photoJpeg = await preparePhoto(opts.photo, fmt.width, fmt.height, opts.focus);
     const render = async (nameColor?: string) => {
-      const t = f1Html(rb, { photoJpeg, colorway: opts.colorway, format, label, nameColor });
+      const t = f1Html(rb, { photoJpeg, colorway, format, label, nameColor });
       const r = await renderHtml(t.html, t.width, t.height, t.fonts);
       return { rendered: r, checks: await runTechnicalChecks(r, fmt, rb.visual) };
     };
@@ -75,12 +68,12 @@ export async function runF1(opts: F1Options): Promise<F1Report> {
       }
       if (fallbackIssue) checks = [...checks, { check: "contrast", textId: NAME_ID, message: NO_NAME_COLOR_WORKS }];
     }
-    const file = join(opts.outDir, `f1-${slug(opts.colorway)}-${format}.png`);
+    const file = join(opts.outDir, `f1-${slug(colorway)}-${format}.png`);
     writeFileSync(file, rendered.png);
     formats.push({ format, file, checks, nameColor });
   }
 
-  const report: F1Report = { colorway: opts.colorway, lint, formats, ok: !hasErrors(lint) && formats.every((f) => f.checks.length === 0) };
+  const report: F1Report = { colorway, lint, formats, ok: !hasErrors(lint) && formats.every((f) => f.checks.length === 0) };
   writeFileSync(join(opts.outDir, "report.json"), JSON.stringify(report, null, 2));
   return report;
 }
