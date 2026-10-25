@@ -1,8 +1,9 @@
-import { existsSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { basename, dirname, join } from "node:path";
 import sharp from "sharp";
 import { afterAll, describe, expect, it } from "vitest";
+import type { PhotoCard } from "../src/cards/cards";
 import { PlanError, type PostPlan } from "../src/post/plan";
 import { runPost } from "../src/post/run";
 import { closeBrowser } from "../src/render/render";
@@ -99,6 +100,47 @@ describe("runPost", () => {
     expect(readFileSync(join(out, "review.md"), "utf8")).toBe(before);
     expect(existsSync(join(out, "slide-3"))).toBe(true);
     expect(readdirSync(dirname(out)).filter((n) => n.startsWith(`${basename(out)}.tmp-`))).toEqual([]);
+  });
+
+  it("thư mục --out có tệp khác thì từ chối, không xoá gì và không để lại thư mục tạm", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "post-"));
+    const plan = await threeSlides(dir);
+    const out = join(dir, "downloads");
+    mkdirSync(out);
+    const keep = join(out, "photo.jpg");
+    writeFileSync(keep, "không phải của post");
+    await expect(runPost(plan, out)).rejects.toThrow(PlanError);
+    expect(readFileSync(keep, "utf8")).toBe("không phải của post");
+    expect(readdirSync(dir).filter((n) => n.includes(".tmp-"))).toEqual([]);
+  });
+
+  it("gói duyệt cũ có .post-pack thì được thay, gói mới cũng có .post-pack", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "post-"));
+    const plan = await threeSlides(dir);
+    const out = join(dir, "out");
+    await runPost(plan, out);
+    expect(existsSync(join(out, ".post-pack"))).toBe(true);
+    await runPost({ ...plan, slides: [plan.slides[0]] }, out);
+    expect(existsSync(join(out, ".post-pack"))).toBe(true);
+    expect(existsSync(join(out, "slide-2"))).toBe(false);
+  });
+
+  it("thẻ ảnh hỏng (thiếu file) trong cards không gây TypeError", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "post-"));
+    const plan = await threeSlides(dir);
+    const one: PostPlan = { ...plan, slides: [plan.slides[0]] };
+    const valid: PhotoCard = {
+      file: one.slides[0].photo, colorway: "easy mint", kind: "flatlay", person: false, quality: "ok",
+      focus: { x: 0.5, y: 0.5 }, note: "", fits: { feed: true, story: true },
+    };
+    const cards = [{ colorway: "easy mint" } as unknown as PhotoCard, valid];
+    try {
+      const r = await runPost(one, join(dir, "out"), cards);
+      expect(r.slides).toHaveLength(1);
+    } catch (e) {
+      expect(e).not.toBeInstanceOf(TypeError);
+      expect(e).toBeInstanceOf(PlanError);
+    }
   });
 
   it("có cảnh báo thì dòng kết quả ghi số cảnh báo", async () => {

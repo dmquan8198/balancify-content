@@ -43,6 +43,12 @@ const isFile = (path: string) => {
   }
 };
 
+/** The card for `photo`, skipping malformed cards (cards.json is user-edited JSON). */
+export function findCard(cards: PhotoCard[], photo: string): PhotoCard | undefined {
+  const target = resolve(photo);
+  return cards.find((c) => typeof c?.file === "string" && resolve(c.file) === target);
+}
+
 /** Shape check for a plan read from JSON; returns one message per problem. */
 function shapeProblems(plan: unknown): string[] {
   if (!isObject(plan)) return ["Kế hoạch phải là một đối tượng JSON."];
@@ -112,7 +118,7 @@ export function validatePlan(plan: PostPlan, rb: Rulebook, cards: PhotoCard[] = 
     }
     if (!s.why?.trim()) warn(`Slide ${n}: thiếu lý do chọn ảnh.`);
 
-    const card = cards.find((c) => typeof c.file === "string" && resolve(c.file) === resolve(s.photo));
+    const card = findCard(cards, s.photo);
     if (!card && cards.length > 0) error(`Slide ${n}: ảnh không có thẻ trong cards.json (${s.photo})`);
     if (card) {
       if (card.colorway === null) error(`Slide ${n}: thẻ ảnh chưa xác định colorway — hỏi người dùng.`);

@@ -7,7 +7,8 @@ import { runF1, type F1Report } from "../pipeline/f1";
 import { fitsFormat, orientedSize } from "../render/prepare";
 import { loadRulebook } from "../rulebook/load";
 import { joinMessages, NAME_FALLBACK_NOTE } from "./format";
-import { PlanError, validatePlan, type PlanIssue, type PostPlan } from "./plan";
+import { assertSafeOutDir, POST_PACK_MARKER, POST_PACK_NOTE } from "./outdir";
+import { findCard, PlanError, validatePlan, type PlanIssue, type PostPlan } from "./plan";
 
 export interface SlideResult {
   index: number;
@@ -58,14 +59,18 @@ export async function checkPlan(plan: PostPlan, cards: PhotoCard[] = []): Promis
 /**
  * Renders into a temporary sibling folder and swaps it in for `outDir` only when every slide
  * succeeded, so a failed run leaves the previous results untouched and no stale slides remain.
+ * Only replaces a folder that is missing, empty or a previous pack (see assertSafeOutDir).
  */
 export async function runPost(plan: PostPlan, outDir: string, cards: PhotoCard[] = []): Promise<PostResult> {
   const warnings = await checkPlan(plan, cards);
+  assertSafeOutDir(outDir, process.cwd());
   const finalDir = resolve(outDir);
   const tmpDir = `${finalDir}.tmp-${randomBytes(4).toString("hex")}`;
   mkdirSync(tmpDir, { recursive: true });
   try {
     const result = await build(plan, warnings, tmpDir, cards);
+    writeFileSync(join(tmpDir, POST_PACK_MARKER), POST_PACK_NOTE);
+    assertSafeOutDir(outDir, process.cwd()); // again: something may have been put there while rendering
     rmSync(finalDir, { recursive: true, force: true });
     renameSync(tmpDir, finalDir);
     const remap = (p: string) => join(finalDir, relative(tmpDir, p));
@@ -80,7 +85,7 @@ export async function runPost(plan: PostPlan, outDir: string, cards: PhotoCard[]
 async function build(plan: PostPlan, warnings: PlanIssue[], outDir: string, cards: PhotoCard[]): Promise<PostResult> {
   const slides: SlideResult[] = [];
   for (const [i, s] of plan.slides.entries()) {
-    const card = cards.find((c) => resolve(c.file) === resolve(s.photo));
+    const card = findCard(cards, s.photo);
     const report = await runF1({ photo: s.photo, colorway: s.colorway, focus: s.focus ?? card?.focus, outDir: join(outDir, `slide-${i + 1}`) });
     slides.push({ index: i + 1, why: s.why, report });
   }
