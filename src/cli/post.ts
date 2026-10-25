@@ -3,11 +3,13 @@ import { parseArgs } from "node:util";
 import type { PhotoCard } from "../cards/cards";
 import { PlanError, type PostPlan } from "../post/plan";
 import { checkPlan, runPost } from "../post/run";
+import { assertOutsideRepo, OutsideRepoError } from "./paths";
 import { parseOrUsage, registerKnownError, runCli, UsageError } from "./run";
 
 const USAGE = "Cách dùng: npm run post -- --plan <plan.json> [--cards <cards.json>] (--check | --out <thư mục>)";
 
 registerKnownError(PlanError);
+registerKnownError(OutsideRepoError);
 
 function readJson(file: string): unknown {
   let text: string;
@@ -29,6 +31,7 @@ await runCli(USAGE, async () => {
   );
   if (!values.plan || (!values.check && !values.out)) throw new UsageError("");
   if (values.check && values.out) throw new UsageError("Chỉ dùng một trong hai: --check hoặc --out.");
+  if (values.out) assertOutsideRepo(values.out);
   const plan = readJson(values.plan) as PostPlan;
   const cards = values.cards ? (readJson(values.cards) as PhotoCard[]) : [];
   if (!Array.isArray(cards)) throw new PlanError(`Không đọc được ${values.cards}: phải là một danh sách thẻ ảnh.`);
