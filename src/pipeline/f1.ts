@@ -40,6 +40,12 @@ export function slug(s: string): string {
     .replace(/^-|-$/g, "");
 }
 
+const NAME_ID = "colorway-name";
+const NO_NAME_COLOR_WORKS =
+  "Cả màu túi và màu trắng đều không đủ tương phản cho tên colorway — cần ảnh khác hoặc đổi điểm lấy nét (--focus-x/--focus-y).";
+
+const nameContrastIssue = (checks: CheckIssue[]) => checks.find((c) => c.check === "contrast" && c.textId === NAME_ID);
+
 export async function runF1(opts: F1Options): Promise<F1Report> {
   const rb = loadRulebook();
   if (!rb.visual.colorways[opts.colorway]) throw new Error(`Không có colorway "${opts.colorway}" trong rulebook/visual.yaml`);
@@ -58,9 +64,16 @@ export async function runF1(opts: F1Options): Promise<F1Report> {
     };
     let { rendered, checks } = await render();
     let nameColor: F1FormatReport["nameColor"] = "accent";
-    if (checks.some((c) => c.check === "contrast" && c.textId === "colorway-name")) {
-      ({ rendered, checks } = await render(rb.visual.neutrals[rb.visual.colorway_name_fallback]));
-      nameColor = "fallback";
+    const accentIssue = nameContrastIssue(checks);
+    if (accentIssue) {
+      const fallback = await render(rb.visual.neutrals[rb.visual.colorway_name_fallback]);
+      const fallbackIssue = nameContrastIssue(fallback.checks);
+      // Keep the fallback only when it is actually better than the accent.
+      if (!fallbackIssue || (fallbackIssue.lowShare ?? 1) < (accentIssue.lowShare ?? 1)) {
+        ({ rendered, checks } = fallback);
+        nameColor = "fallback";
+      }
+      if (fallbackIssue) checks = [...checks, { check: "contrast", textId: NAME_ID, message: NO_NAME_COLOR_WORKS }];
     }
     const file = join(opts.outDir, `f1-${slug(opts.colorway)}-${format}.png`);
     writeFileSync(file, rendered.png);

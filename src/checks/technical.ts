@@ -8,6 +8,8 @@ export interface CheckIssue {
   message: string;
   /** `data-text` id of the element the issue is about, when there is one. */
   textId?: string;
+  /** Contrast issues: share (0–1) of glyph pixels below the threshold; 1 when no glyph was found. */
+  lowShare?: number;
 }
 
 const TOLERANCE = 0.5;
@@ -84,7 +86,7 @@ export async function checkContrast(r: RenderResult, boxes: TextBox[], rules: Vi
       }
     }
     if (glyphs === 0) {
-      issues.push({ check: "contrast", textId: b.id, message: `Chữ "${b.id}": không tìm thấy nét chữ để kiểm tra tương phản.` });
+      issues.push({ check: "contrast", textId: b.id, lowShare: 1, message: `Chữ "${b.id}": không tìm thấy nét chữ để kiểm tra tương phản.` });
       continue;
     }
     const share = low / glyphs;
@@ -92,6 +94,7 @@ export async function checkContrast(r: RenderResult, boxes: TextBox[], rules: Vi
       issues.push({
         check: "contrast",
         textId: b.id,
+        lowShare: share,
         message: `Chữ "${b.id}" có ${(share * 100).toFixed(1)}% nét chữ tương phản dưới ${min}:1 (cho phép tối đa ${MAX_LOW_CONTRAST_SHARE * 100}%).`,
       });
     }

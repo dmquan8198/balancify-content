@@ -78,6 +78,18 @@ describe("runF1", () => {
     }
   });
 
+  it("nền sáng: giữ màu túi nếu màu trắng còn tệ hơn, và báo cần ảnh khác", async () => {
+    const outDir = mkdtempSync(join(tmpdir(), "f1-"));
+    const report = await runF1({ photo: await makeFlatlayFixture("#B8C6B8", "#F4F2EE"), colorway: "easy mint", outDir });
+    expect(report.ok).toBe(false);
+    for (const f of report.formats) {
+      expect(f.nameColor).toBe("accent");
+      expect(f.checks.map((c) => c.message)).toContain(
+        "Cả màu túi và màu trắng đều không đủ tương phản cho tên colorway — cần ảnh khác hoặc đổi điểm lấy nét (--focus-x/--focus-y).",
+      );
+    }
+  });
+
   it("báo lỗi rõ khi colorway sai", async () => {
     const outDir = mkdtempSync(join(tmpdir(), "f1-"));
     await expect(runF1({ photo: await makeFlatlayFixture(), colorway: "hot red", outDir })).rejects.toThrow(/hot red/);

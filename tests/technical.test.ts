@@ -49,6 +49,8 @@ describe("checkContrast", () => {
     expect(issues).toHaveLength(1);
     expect(issues[0].message).toMatch(/%/);
     expect(issues[0].textId).toBe("t");
+    expect(issues[0].lowShare).toBeGreaterThan(0.05);
+    expect(issues[0].lowShare).toBeLessThanOrEqual(1);
   });
 
   it("chữ trắng hoàn toàn trên nền #3B3D3F đạt", async () => {
