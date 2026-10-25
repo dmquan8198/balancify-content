@@ -73,6 +73,15 @@ describe("chuỗi ingest → contact → cards → post", () => {
     expect(second.out).toContain("KẾT QUẢ: ĐẠT");
     expect(existsSync(join(out, "review.md"))).toBe(true);
     expect(existsSync(photos) && existsSync(file)).toBe(true);
+
+    // With an empty cards file the run has a warning; the CLI prints the same verdict line as review.md.
+    const empty = join(work, "empty-cards.json");
+    writeFileSync(empty, "[]");
+    const warned = run("post", "--plan", plan, "--cards", empty, "--out", out);
+    expect(warned.code).toBe(0);
+    const reviewVerdict = readFileSync(join(out, "review.md"), "utf8").split("\n").find((l) => l.startsWith("KẾT QUẢ:"));
+    expect(reviewVerdict).toBe("KẾT QUẢ: ĐẠT (1 cảnh báo — xem mục Cảnh báo)");
+    expect(warned.out.split("\n").find((l) => l.startsWith("KẾT QUẢ:"))).toBe(reviewVerdict);
   });
 
   it("--out có tệp lạ: mã 1, báo lỗi tiếng Việt, tệp còn nguyên", async () => {

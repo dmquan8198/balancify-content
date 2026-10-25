@@ -6,7 +6,7 @@ import { contactSheet } from "../contact/sheet";
 import { runF1, type F1Report } from "../pipeline/f1";
 import { fitsFormat, orientedSize } from "../render/prepare";
 import { loadRulebook } from "../rulebook/load";
-import { joinMessages, NAME_FALLBACK_NOTE } from "./format";
+import { joinMessages, NAME_FALLBACK_NOTE, verdictLine } from "./format";
 import { assertSafeOutDir, POST_PACK_MARKER, POST_PACK_NOTE } from "./outdir";
 import { findCard, PlanError, validatePlan, type PlanIssue, type PostPlan } from "./plan";
 
@@ -110,7 +110,7 @@ async function build(plan: PostPlan, warnings: PlanIssue[], outDir: string, card
   const lines = [
     `# Gói duyệt — mục tiêu ${plan.goal} · trụ ${plan.pillar} · ${plan.family}`,
     "",
-    !ok ? "KẾT QUẢ: CÓ LỖI" : warnings.length > 0 ? `KẾT QUẢ: ĐẠT (${warnings.length} cảnh báo — xem mục Cảnh báo)` : "KẾT QUẢ: ĐẠT",
+    verdictLine(ok, warnings.length),
     "",
     "## Caption",
     "",

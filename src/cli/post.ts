@@ -1,5 +1,6 @@
 import { parseArgs } from "node:util";
 import type { PhotoCard } from "../cards/cards";
+import { verdictLine } from "../post/format";
 import { PlanError, type PostPlan } from "../post/plan";
 import { checkPlan, runPost } from "../post/run";
 import { assertOutsideRepo, OutsideRepoError } from "./paths";
@@ -35,6 +36,6 @@ await runCli(USAGE, async () => {
   console.log(`Ảnh xem nhanh: ${r.previewFile}`);
   console.log(`Caption: ${r.captionFile}`);
   for (const w of r.warnings) console.log(`Cảnh báo: ${w.message}`);
-  console.log(r.ok ? "KẾT QUẢ: ĐẠT" : "KẾT QUẢ: CÓ LỖI");
+  console.log(verdictLine(r.ok, r.warnings.length));
   return r.ok ? 0 : 1;
 });
