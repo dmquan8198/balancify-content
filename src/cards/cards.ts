@@ -21,6 +21,8 @@ export interface PhotoCard {
   fits?: { feed: boolean; story: boolean };
 }
 
+export class CardsError extends Error {}
+
 export interface CardIssue {
   file: string;
   message: string;
@@ -29,12 +31,20 @@ export interface CardIssue {
 export const inUnit = (v: unknown) => typeof v === "number" && Number.isFinite(v) && v >= 0 && v <= 1;
 
 export async function completeCards(cards: PhotoCard[], rb: Rulebook): Promise<{ cards: PhotoCard[]; issues: CardIssue[] }> {
+  if (!Array.isArray(cards)) throw new CardsError("cards.json phải là một danh sách thẻ ảnh.");
   const issues: CardIssue[] = [];
   const out: PhotoCard[] = [];
 
   for (const c of cards) {
-    const add = (message: string) => issues.push({ file: c.file, message });
+    const add = (message: string) => issues.push({ file: String(c?.file ?? "?"), message });
+    if (typeof c !== "object" || c === null || typeof c.file !== "string" || c.file === "") {
+      add(`Thẻ phải có "file" là đường dẫn ảnh.`);
+      out.push(c);
+      continue;
+    }
+    // fits is always measured here, never trusted from the input.
     const next: PhotoCard = { ...c };
+    delete next.fits;
 
     if (!KINDS.includes(c.kind)) add(`kind phải là ${KINDS.join(" / ")}, đang là "${c.kind}".`);
     if (!QUALITIES.includes(c.quality)) add(`quality phải là ${QUALITIES.join(" / ")}, đang là "${c.quality}".`);

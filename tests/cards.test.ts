@@ -53,4 +53,21 @@ describe("completeCards", () => {
     expect(messages).toMatch(/focus/);
     expect(messages).toMatch(/Không tìm thấy/);
   });
+
+  it("không giữ fits viết tay: xoá trước khi đo, đọc lỗi thì để trống", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "cards-"));
+    const wide = await photo(dir, "wide.jpg", 1920, 1080);
+    const corrupt = join(dir, "c.jpg");
+    writeFileSync(corrupt, "notajpeg");
+    const lie = { feed: true, story: true };
+    const { cards, issues } = await completeCards([card(wide, { fits: lie }), card(corrupt, { fits: lie })], rb);
+    expect(cards[0].fits).toEqual({ feed: false, story: false });
+    expect(cards[1].fits).toBeUndefined();
+    expect(issues.length).toBeGreaterThan(0);
+  });
+
+  it("thẻ không có file chuỗi thì báo lỗi, không ném", async () => {
+    const { issues } = await completeCards([{ colorway: "easy mint" } as unknown as PhotoCard], rb);
+    expect(issues.map((i) => i.message).join("\n")).toMatch(/file/);
+  });
 });

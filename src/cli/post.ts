@@ -9,13 +9,29 @@ const USAGE = "Cách dùng: npm run post -- --plan <plan.json> [--cards <cards.j
 
 registerKnownError(PlanError);
 
+function readJson(file: string): unknown {
+  let text: string;
+  try {
+    text = readFileSync(file, "utf8");
+  } catch (e) {
+    throw new PlanError(`Không đọc được ${file}: ${e instanceof Error ? e.message : String(e)}`);
+  }
+  try {
+    return JSON.parse(text);
+  } catch (e) {
+    throw new PlanError(`Không đọc được ${file}: JSON không hợp lệ (${e instanceof Error ? e.message : String(e)})`);
+  }
+}
+
 await runCli(USAGE, async () => {
   const { values } = parseOrUsage(() =>
     parseArgs({ options: { plan: { type: "string" }, cards: { type: "string" }, out: { type: "string" }, check: { type: "boolean", default: false } } }),
   );
   if (!values.plan || (!values.check && !values.out)) throw new UsageError("");
-  const plan = JSON.parse(readFileSync(values.plan, "utf8")) as PostPlan;
-  const cards = values.cards ? (JSON.parse(readFileSync(values.cards, "utf8")) as PhotoCard[]) : [];
+  if (values.check && values.out) throw new UsageError("Chỉ dùng một trong hai: --check hoặc --out.");
+  const plan = readJson(values.plan) as PostPlan;
+  const cards = values.cards ? (readJson(values.cards) as PhotoCard[]) : [];
+  if (!Array.isArray(cards)) throw new PlanError(`Không đọc được ${values.cards}: phải là một danh sách thẻ ảnh.`);
 
   if (values.check) {
     const warnings = await checkPlan(plan, cards);

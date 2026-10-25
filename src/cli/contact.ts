@@ -1,8 +1,10 @@
 import { readFileSync } from "node:fs";
 import { parseArgs } from "node:util";
-import { contactSheet } from "../contact/sheet";
+import { contactSheet, SheetError } from "../contact/sheet";
 import type { IngestResult } from "../ingest/ingest";
-import { parseOrUsage, runCli, UsageError } from "./run";
+import { parseOrUsage, registerKnownError, runCli, UsageError } from "./run";
+
+registerKnownError(SheetError);
 
 const USAGE = "Cách dùng: npm run contact -- --from <photos.json> --out <bảng.jpg>";
 

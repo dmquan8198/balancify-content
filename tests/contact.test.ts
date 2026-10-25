@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import sharp from "sharp";
 import { describe, expect, it } from "vitest";
-import { contactSheet } from "../src/contact/sheet";
+import { contactSheet, SheetError } from "../src/contact/sheet";
 
 describe("contactSheet", () => {
   it("xếp lưới 4 cột, mỗi ô 360px + dải nhãn 40px", async () => {
@@ -23,5 +23,19 @@ describe("contactSheet", () => {
 
   it("danh sách rỗng → lỗi", async () => {
     await expect(contactSheet([], "/tmp/x.jpg")).rejects.toThrow(/rỗng/);
+  });
+
+  it("ảnh không đọc được: lỗi tiếng Việt nêu tên file", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "contact-"));
+    const bad = join(dir, "hong.jpg");
+    writeFileSync(bad, "notajpeg");
+    const err = await contactSheet([{ file: bad, label: "1" }], join(dir, "s.jpg")).catch((e) => e);
+    expect(err).toBeInstanceOf(SheetError);
+    expect(err.message).toMatch(/hong\.jpg/);
+  });
+
+  it("quá 600 ảnh: báo chia nhỏ", async () => {
+    const items = Array.from({ length: 601 }, (_, i) => ({ file: "/khong/co.jpg", label: String(i) }));
+    await expect(contactSheet(items, "/tmp/x.jpg")).rejects.toThrow(/Quá nhiều ảnh cho một bảng \(601 > 600\) — chia nhỏ thư mục\./);
   });
 });
