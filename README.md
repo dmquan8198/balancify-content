@@ -13,6 +13,12 @@ Nhắn Claude: "Làm F1 cho ảnh [đường dẫn hoặc link], colorway easy m
 Lệnh tương ứng (Claude tự chạy):
 `npm run f1 -- --photo <ảnh> --colorway "easy mint"`
 
+- `--photo` là đường dẫn file ảnh trên máy. Nếu gửi link Google Drive, Claude tải ảnh về trước rồi mới chạy lệnh.
+- Ảnh HEIC (iPhone) chưa đọc được — xuất sang JPEG trước.
+- Tên colorway có khoảng trắng phải đặt trong ngoặc kép; viết hoa hay dùng gạch nối (`easy-mint`) đều được.
+- Kết quả nằm trong `out/`: `f1-<colorway>-feed.png`, `f1-<colorway>-story.png` và báo cáo `report-<colorway>.json` (ví dụ `report-easy-mint.json`).
+- Mã thoát: `0` = đạt; `1` = có lỗi kiểm tra hoặc lỗi ảnh/rulebook/font/colorway; `2` = gõ lệnh sai.
+
 ## Đang dùng tạm, cần thay
 - Hex 4 colorway (đo từ ảnh) — `rulebook/visual.yaml`
 - Font viết tay Patrick Hand — `rulebook/visual.yaml`
