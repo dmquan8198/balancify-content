@@ -1,0 +1,6 @@
+pillars:
+  FEEL: { share: 30, goals: [C], family: F1, photo: flatlay }
+  REAL: { share: 40, goals: [B, C], family: F2, photo: lifestyle }
+  SERVE: { share: 10, goals: [B], family: F3, photo: any }
+  PROOF: { share: 20, goals: [B], family: F3, photo: lifestyle }
+  PROGRAM: { share: null, goals: [D], family: F4, photo: any }

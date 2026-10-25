@@ -1,0 +1,21 @@
+neutrals:
+  ground: "#3B3D3F"
+  white: "#FFFFFF"
+colorways:
+  dreaming blue: { accent: "#B2CFEA", provisional: true }
+  easy mint: { accent: "#B8C6B8", provisional: true }
+  off duty pink: { accent: "#EDCBC9", provisional: true }
+  not tired black: { accent: "#252728", provisional: true }
+fonts:
+  display: { family: Fraunces, weight: "100 900", file: assets/fonts/Fraunces.ttf }
+  body: { family: Be Vietnam Pro, weight: 400, file: assets/fonts/BeVietnamPro-Regular.ttf }
+  body_semibold: { family: Be Vietnam Pro, weight: 600, file: assets/fonts/BeVietnamPro-SemiBold.ttf }
+  handwriting: { family: Patrick Hand, weight: 400, file: assets/fonts/PatrickHand-Regular.ttf, provisional: true }
+banned_elements: [sparkle, khung viền, sticker, gradient màu, chữ nhiều màu]
+formats:
+  feed: { width: 1080, height: 1350 }
+  story: { width: 1080, height: 1920, safe_top: 250, safe_bottom: 340 }
+contrast:
+  min_small: 4.5
+  min_large: 3.0
+  large_px: 24

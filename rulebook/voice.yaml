@@ -1,0 +1,39 @@
+pronoun: mình
+forbidden:
+  - shop
+  - bên em
+  - nhà mình
+english_allowed:
+  phrases:
+    - Daily Hug Bag
+    - Find your own balance
+    - dreaming blue
+    - easy mint
+    - off duty pink
+    - not tired black
+  words:
+    - balancify
+    - laptop
+    - reel
+    - story
+    - nylon
+    - comment
+    - HUG
+hashtags_allowed:
+  - "#dailyhugbag"
+  - "#balancify"
+replacements:
+  soft: mềm
+  cozy: êm
+blocked_claims:
+  - chống nước
+  - chống thấm
+  - bảo hành
+  - da thật
+  - cao cấp nhất
+  - rẻ nhất
+examples:
+  - "Mình không làm ra một cái túi. Mình làm ra một cái ôm mang đi được."
+  - "Không phải mình lười. Mình chỉ hết pin."
+  - "Bạn đang mang gì trong túi đi làm? Mình đoán 80% có: cục sạc dự phòng đã hết pin."
+  - "Cân bằng không phải là đứng yên. Là biết mình đang nghiêng về đâu."
