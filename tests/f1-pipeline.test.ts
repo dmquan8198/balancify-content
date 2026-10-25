@@ -1,4 +1,4 @@
-import { existsSync, mkdtempSync, readFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readdirSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import sharp from "sharp";
@@ -40,8 +40,8 @@ describe("runF1", () => {
     expect([feed.width, feed.height]).toEqual([1080, 1350]);
     expect([story.width, story.height]).toEqual([1080, 1920]);
 
-    expect(existsSync(join(outDir, "report.json"))).toBe(true);
-    expect(JSON.parse(readFileSync(join(outDir, "report.json"), "utf8")).ok).toBe(true);
+    expect(existsSync(join(outDir, "report-easy-mint.json"))).toBe(true);
+    expect(JSON.parse(readFileSync(join(outDir, "report-easy-mint.json"), "utf8")).ok).toBe(true);
   });
 
   it("tên colorway đổi sang trắng khi màu túi không đủ tương phản", async () => {
@@ -95,6 +95,23 @@ describe("runF1", () => {
     const report = await runF1({ photo: await makeFlatlayFixture(), colorway: "Easy-Mint", outDir });
     expect(report.colorway).toBe("easy mint");
     expect(report.formats[0].file).toBe(join(outDir, "f1-easy-mint-feed.png"));
+  });
+
+  it("lần chạy lỗi sau lần chạy thành công không để lại kết quả cũ", async () => {
+    const outDir = mkdtempSync(join(tmpdir(), "f1-"));
+    await runF1({ photo: await makeFlatlayFixture(), colorway: "easy mint", outDir });
+    expect(existsSync(join(outDir, "f1-easy-mint-feed.png"))).toBe(true);
+
+    const tiny = await sharp({ create: { width: 500, height: 500, channels: 3, background: "#888" } }).jpeg().toBuffer();
+    await expect(runF1({ photo: tiny, colorway: "easy mint", outDir })).rejects.toThrow();
+    const left = readdirSync(outDir).filter((f) => /^f1-easy-mint-.*\.png$|^report-easy-mint\.json$/.test(f));
+    expect(left).toEqual([]);
+  });
+
+  it("thư mục đầu ra chưa được tạo nếu ảnh lỗi", async () => {
+    const outDir = join(mkdtempSync(join(tmpdir(), "f1-")), "chua-co");
+    await expect(runF1({ photo: "/khong/co/anh.jpg", colorway: "easy mint", outDir })).rejects.toThrow();
+    expect(existsSync(outDir)).toBe(false);
   });
 
   it("báo lỗi rõ khi colorway sai", async () => {

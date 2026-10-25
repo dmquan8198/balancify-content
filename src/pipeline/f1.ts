@@ -1,4 +1,4 @@
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { runTechnicalChecks, type CheckIssue } from "../checks/technical";
 import { hasErrors, lintText, type LintIssue } from "../lint/voice";
@@ -44,9 +44,15 @@ export async function runF1(opts: F1Options): Promise<F1Report> {
   const colorway = findColorway(rb.visual, opts.colorway).name;
   const label = opts.label ?? rb.brand.product;
   const lint = lintText(label, rb.voice);
-  mkdirSync(opts.outDir, { recursive: true });
 
+  // Clear this colorway's previous results first, so a failed run cannot leave stale files behind.
+  const pngPath = (format: FormatName) => join(opts.outDir, `f1-${slug(colorway)}-${format}.png`);
+  const reportPath = join(opts.outDir, `report-${slug(colorway)}.json`);
+  for (const p of [pngPath("feed"), pngPath("story"), reportPath]) rmSync(p, { force: true });
+
+  // Render everything in memory; touch the output folder only once every format succeeded.
   const formats: F1FormatReport[] = [];
+  const pngs: Buffer[] = [];
   for (const format of ["feed", "story"] as const) {
     const fmt = rb.visual.formats[format];
     const photoJpeg = await preparePhoto(opts.photo, fmt.width, fmt.height, opts.focus);
@@ -68,12 +74,13 @@ export async function runF1(opts: F1Options): Promise<F1Report> {
       }
       if (fallbackIssue) checks = [...checks, { check: "contrast", textId: NAME_ID, message: NO_NAME_COLOR_WORKS }];
     }
-    const file = join(opts.outDir, `f1-${slug(colorway)}-${format}.png`);
-    writeFileSync(file, rendered.png);
-    formats.push({ format, file, checks, nameColor });
+    pngs.push(rendered.png);
+    formats.push({ format, file: pngPath(format), checks, nameColor });
   }
 
   const report: F1Report = { colorway, lint, formats, ok: !hasErrors(lint) && formats.every((f) => f.checks.length === 0) };
-  writeFileSync(join(opts.outDir, "report.json"), JSON.stringify(report, null, 2));
+  mkdirSync(opts.outDir, { recursive: true });
+  formats.forEach((f, i) => writeFileSync(f.file, pngs[i]));
+  writeFileSync(reportPath, JSON.stringify(report, null, 2));
   return report;
 }
