@@ -37,6 +37,9 @@ export function checkSafeZone(boxes: TextBox[], fmt: Format): CheckIssue[] {
 /** Share of glyph pixels allowed below the contrast threshold (covers anti-aliased edges). */
 export const MAX_LOW_CONTRAST_SHARE = 0.05;
 
+/** Mask luminance below this counts as a glyph core pixel; lighter mask pixels are anti-aliased edges, blended with what is behind. */
+export const GLYPH_CORE_MAX_LUMA = 64;
+
 interface RawImage {
   data: Buffer;
   width: number;
@@ -71,7 +74,7 @@ export async function checkContrast(r: RenderResult, boxes: TextBox[], rules: Vi
     for (let y = y0; y < y1; y++) {
       for (let x = x0; x < x1; x++) {
         const i = (y * W + x) * mask.channels;
-        if (luma(mask, i) >= 128) continue;
+        if (luma(mask, i) >= GLYPH_CORE_MAX_LUMA) continue;
         glyphs++;
         const pi = (y * png.width + x) * png.channels;
         const bi = (y * bg.width + x) * bg.channels;

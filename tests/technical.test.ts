@@ -65,9 +65,9 @@ describe("checkContrast", () => {
   });
 
   it("chữ lớn dùng ngưỡng 3:1", async () => {
-    // #808080 on white ≈ 3.95:1 — fails small text, passes large text.
-    expect(await run("#ffffff", label("font-size:16px;color:#808080"))).toHaveLength(1);
-    expect(await run("#ffffff", label("font-size:120px;font-weight:900;color:#808080", "HUG"))).toEqual([]);
+    // #8a8a8a on white ≈ 3.45:1 — fails small text, passes large text.
+    expect(await run("#ffffff", label("font-size:16px;font-weight:400;color:#8a8a8a"))).toHaveLength(1);
+    expect(await run("#ffffff", label("font-size:64px;font-weight:400;color:#8a8a8a"))).toEqual([]);
   });
 
   it("báo lỗi khi không tìm thấy nét chữ trong khối", async () => {
