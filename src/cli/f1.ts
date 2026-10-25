@@ -1,12 +1,10 @@
 import { parseArgs } from "node:util";
 import { runF1 } from "../pipeline/f1";
+import { joinMessages, NAME_FALLBACK_NOTE } from "../post/format";
 import { parseOrUsage, runCli, UsageError } from "./run";
 
 const USAGE = 'Cách dùng: npm run f1 -- --photo <đường dẫn ảnh> --colorway "easy mint" [--out out] [--focus-x 0.5] [--focus-y 0.5]';
 const QUOTE_HINT = 'Tên colorway có khoảng trắng — hãy đặt trong ngoặc kép, ví dụ --colorway "easy mint"';
-
-/** Issue messages end with "."; drop it before joining so the line has no ".;". */
-const joinMessages = (messages: string[]) => messages.map((m) => m.replace(/\.\s*$/, "")).join("; ");
 
 await runCli(USAGE, async () => {
   const { values } = parseOrUsage(
@@ -30,7 +28,7 @@ await runCli(USAGE, async () => {
     focus: { x: Number(values["focus-x"]), y: Number(values["focus-y"]) },
   });
   for (const f of report.formats) {
-    const note = f.nameColor === "fallback" ? " (tên colorway đổi sang trắng vì màu túi không đủ tương phản)" : "";
+    const note = f.nameColor === "fallback" ? NAME_FALLBACK_NOTE : "";
     console.log(`${f.format}: ${f.file} — ${f.checks.length === 0 ? "đạt" : joinMessages(f.checks.map((c) => c.message))}${note}`);
   }
   for (const issue of report.lint) console.log(`chữ: ${issue.message}`);

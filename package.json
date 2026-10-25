@@ -10,6 +10,7 @@
     "ingest": "tsx src/cli/ingest.ts",
     "contact": "tsx src/cli/contact.ts",
     "cards": "tsx src/cli/cards.ts",
+    "post": "tsx src/cli/post.ts",
     "golden:update": "UPDATE_GOLDEN=1 vitest run tests/golden.test.ts"
   },
   "dependencies": {
