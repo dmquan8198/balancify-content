@@ -1,29 +1,16 @@
-import { readFileSync } from "node:fs";
 import { parseArgs } from "node:util";
 import type { PhotoCard } from "../cards/cards";
 import { PlanError, type PostPlan } from "../post/plan";
 import { checkPlan, runPost } from "../post/run";
 import { assertOutsideRepo, OutsideRepoError } from "./paths";
-import { parseOrUsage, registerKnownError, runCli, UsageError } from "./run";
+import { parseOrUsage, readJson as readJsonWith, registerKnownError, runCli, UsageError } from "./run";
 
 const USAGE = "Cách dùng: npm run post -- --plan <plan.json> --cards <cards.json> (--check | --out <thư mục>)";
 
 registerKnownError(PlanError);
+const readJson = (file: string) => readJsonWith(file, (m) => new PlanError(m));
 registerKnownError(OutsideRepoError);
 
-function readJson(file: string): unknown {
-  let text: string;
-  try {
-    text = readFileSync(file, "utf8");
-  } catch (e) {
-    throw new PlanError(`Không đọc được ${file}: ${e instanceof Error ? e.message : String(e)}`);
-  }
-  try {
-    return JSON.parse(text);
-  } catch (e) {
-    throw new PlanError(`Không đọc được ${file}: JSON không hợp lệ (${e instanceof Error ? e.message : String(e)})`);
-  }
-}
 
 await runCli(USAGE, async () => {
   const { values } = parseOrUsage(() =>

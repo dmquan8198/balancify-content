@@ -19,7 +19,7 @@ const escapeXml = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").
 
 /** Writes a JPEG grid of thumbnails, each with a numbered label strip underneath. */
 export async function contactSheet(items: SheetItem[], outPath: string, opts: SheetOptions = { cell: 360, cols: 4 }): Promise<void> {
-  if (items.length === 0) throw new Error("Danh sách ảnh rỗng — không có gì để xếp bảng.");
+  if (items.length === 0) throw new SheetError("Danh sách ảnh rỗng — không có gì để xếp bảng.");
   if (items.length > MAX_ITEMS) throw new SheetError(`Quá nhiều ảnh cho một bảng (${items.length} > ${MAX_ITEMS}) — chia nhỏ thư mục.`);
   const { cell, cols } = opts;
   const rows = Math.ceil(items.length / cols);

@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { PhotoError } from "../render/prepare";
 import { closeBrowser, FontLoadError } from "../render/render";
 import { ColorwayError } from "../rulebook/colorway";
@@ -44,5 +45,20 @@ export async function runCli(usage: string, main: () => Promise<number>): Promis
     }
   } finally {
     await closeBrowser();
+  }
+}
+
+/** Reads and parses a JSON file; read and parse failures become `fail(message)` (a known error class). */
+export function readJson(file: string, fail: (message: string) => Error): unknown {
+  let text: string;
+  try {
+    text = readFileSync(file, "utf8");
+  } catch (e) {
+    throw fail(`Không đọc được ${file}: ${e instanceof Error ? e.message : String(e)}`);
+  }
+  try {
+    return JSON.parse(text);
+  } catch (e) {
+    throw fail(`Không đọc được ${file}: JSON không hợp lệ (${e instanceof Error ? e.message : String(e)})`);
   }
 }

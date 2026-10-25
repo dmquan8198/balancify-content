@@ -1,28 +1,16 @@
-import { readFileSync, renameSync, writeFileSync } from "node:fs";
+import { renameSync, writeFileSync } from "node:fs";
 import { basename } from "node:path";
 import { parseArgs } from "node:util";
 import { CardsError, completeCards, type PhotoCard } from "../cards/cards";
 import { loadRulebook } from "../rulebook/load";
-import { parseOrUsage, registerKnownError, runCli, UsageError } from "./run";
+import { parseOrUsage, readJson as readJsonWith, registerKnownError, runCli, UsageError } from "./run";
 
 registerKnownError(CardsError);
+const readJson = (file: string) => readJsonWith(file, (m) => new CardsError(m));
 
 const USAGE = "Cách dùng: npm run cards -- --file <cards.json>";
 const mark = (ok: boolean | undefined) => (ok ? "✓" : "✗");
 
-function readJson(file: string): unknown {
-  let text: string;
-  try {
-    text = readFileSync(file, "utf8");
-  } catch (e) {
-    throw new CardsError(`Không đọc được ${file}: ${e instanceof Error ? e.message : String(e)}`);
-  }
-  try {
-    return JSON.parse(text);
-  } catch (e) {
-    throw new CardsError(`Không đọc được ${file}: JSON không hợp lệ (${e instanceof Error ? e.message : String(e)})`);
-  }
-}
 
 await runCli(USAGE, async () => {
   const { values } = parseOrUsage(() => parseArgs({ options: { file: { type: "string" } } }));

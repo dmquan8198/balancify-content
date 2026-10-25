@@ -61,3 +61,36 @@ describe("CLI cards/post: JSON và tuỳ chọn", () => {
     expect(existsSync(join(dir, "o2"))).toBe(false);
   });
 });
+
+describe("CLI contact: JSON hỏng và danh sách rỗng", () => {
+  const dir = mkdtempSync(join(tmpdir(), "cli-contact-"));
+  const sheet = join(dir, "sheet.jpg");
+
+  it("JSON hỏng → lỗi tiếng Việt, mã 1, không stack trace", () => {
+    const broken = join(dir, "broken.json");
+    writeFileSync(broken, "{ không phải json");
+    const r = cli("contact", "--from", broken, "--out", sheet);
+    expect(r.code).toBe(1);
+    expect(r.out).toMatch(/Lỗi: Không đọc được .*broken\.json: JSON không hợp lệ/);
+    expect(r.out).not.toMatch(/\n\s+at /);
+    expect(existsSync(sheet)).toBe(false);
+  });
+
+  it("file không tồn tại → lỗi tiếng Việt, mã 1", () => {
+    const r = cli("contact", "--from", join(dir, "khong-co.json"), "--out", sheet);
+    expect(r.code).toBe(1);
+    expect(r.out).toMatch(/Lỗi: Không đọc được .*khong-co\.json/);
+  });
+
+  it("danh sách ảnh rỗng hoặc thiếu → lỗi tiếng Việt, mã 1, không tạo bảng", () => {
+    for (const [name, text] of [["empty.json", '{"photos":[]}'], ["nophotos.json", "{}"], ["list.json", "[]"]]) {
+      const file = join(dir, name);
+      writeFileSync(file, text);
+      const r = cli("contact", "--from", file, "--out", sheet);
+      expect(r.code).toBe(1);
+      expect(r.out).toMatch(/Lỗi: .*không có ảnh nào/);
+      expect(r.out).not.toContain("Lỗi không mong đợi");
+      expect(existsSync(sheet)).toBe(false);
+    }
+  });
+});
