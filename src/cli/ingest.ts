@@ -10,6 +10,8 @@ await runCli(USAGE, async () => {
   const r = await ingest(positionals, values.out);
   console.log(`Đã nạp ${r.photos.length} ảnh vào ${values.out}`);
   for (const p of r.photos) console.log(`${p.index}. ${p.title} → ${p.file} (${p.width}×${p.height})`);
+  for (const s of r.skipped) console.log(`Đã có sẵn: ${s.input} — ${s.reason}`);
   for (const f of r.failures) console.log(`Bỏ qua ${f.input}: ${f.reason}`);
-  return r.photos.length > 0 ? 0 : 1;
+  if (r.failures.length > 0) console.log(`Bỏ qua ${r.failures.length} file.`);
+  return r.photos.length + r.skipped.length > 0 ? 0 : 1;
 });
