@@ -80,4 +80,25 @@ describe("ingest", () => {
     expect(r.photos).toHaveLength(1);
     expect(r.skipped.map((s) => s.input)).toEqual([two]);
   });
+
+  it("chỉ nhận JPEG/PNG/WebP theo nội dung thật; đuôi file theo định dạng phát hiện", async () => {
+    const src = mkdtempSync(join(tmpdir(), "ingest-src-"));
+    const out = join(mkdtempSync(join(tmpdir(), "ingest-out-")), "photos");
+    const base = { create: { width: 1200, height: 1600, channels: 3 as const, background: "#888" } };
+    const gif = join(src, "a.gif");
+    writeFileSync(gif, await sharp(base).gif().toBuffer());
+    const svg = join(src, "b.svg");
+    writeFileSync(svg, '<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1600"><rect width="1200" height="1600" fill="red"/></svg>');
+    const png = await sharp(base).png().toBuffer();
+    const drive = join(src, "d.txt");
+    writeFileSync(drive, JSON.stringify({ content: png.toString("base64"), id: "p1", mimeType: "image/jpeg", title: "tho.jpeg" }));
+
+    const r = await ingest([gif, svg, drive], out);
+    expect(r.failures.map((f) => f.input)).toEqual([gif, svg]);
+    expect(r.failures[0].reason).toContain("gif");
+    expect(r.failures[0].reason).toContain("JPEG, PNG hoặc WebP");
+    expect(r.failures[1].reason).toContain("svg");
+    expect(r.photos).toHaveLength(1);
+    expect(r.photos[0].file).toBe(join(out, "01-tho.png"));
+  });
 });

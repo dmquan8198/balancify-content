@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { basename, extname, join } from "node:path";
-import { orientedSize, PhotoError } from "../render/prepare";
+import { photoInfo, PhotoError } from "../render/prepare";
 import { slug } from "../rulebook/colorway";
 
 export interface IngestedPhoto {
@@ -27,6 +27,9 @@ export interface IngestResult {
 }
 
 const EXT_BY_MIME: Record<string, string> = { "image/jpeg": ".jpg", "image/png": ".png", "image/webp": ".webp" };
+const EXT_BY_FORMAT: Record<string, string> = { jpeg: ".jpg", png: ".png", webp: ".webp" };
+
+const unsupported = (what: string) => new PhotoError(`Định dạng ${what} chưa hỗ trợ — cần JPEG, PNG hoặc WebP (ảnh HEIC hãy xuất sang JPEG).`);
 const DRIVE_RESULT_EXT = new Set([".txt", ".json"]);
 
 interface Loaded {
@@ -48,7 +51,7 @@ function load(input: string): Loaded {
   }
   if (typeof parsed.content !== "string") throw new PhotoError("File JSON không có trường content (không phải kết quả tải từ Drive).");
   if (parsed.mimeType && !EXT_BY_MIME[parsed.mimeType]) {
-    throw new PhotoError(`Định dạng ${parsed.mimeType} chưa hỗ trợ — cần JPEG, PNG hoặc WebP (ảnh HEIC hãy xuất sang JPEG).`);
+    throw unsupported(parsed.mimeType);
   }
   return { title: parsed.title ?? basename(input), mimeType: parsed.mimeType, driveId: parsed.id, data: Buffer.from(parsed.content, "base64") };
 }
@@ -87,16 +90,17 @@ export async function ingest(inputs: string[], outDir: string): Promise<IngestRe
 
   for (const input of inputs) {
     try {
-      const { title, mimeType, driveId, data } = load(input);
+      const { title, driveId, data } = load(input);
       const dup = [...existing, ...photos].find((p) => (driveId ? p.driveId === driveId : !p.driveId && p.title === title && sizeOf(p.file) === data.length));
       if (dup) {
         skipped.push({ input, reason: `Đã nạp trước đó (${dup.file})` });
         continue;
       }
-      const { width, height } = await orientedSize(data);
+      const { width, height, format } = await photoInfo(data);
+      const ext = EXT_BY_FORMAT[format];
+      if (!ext) throw unsupported(format);
       const index = next;
-      const ext = (mimeType && EXT_BY_MIME[mimeType]) || extname(title).toLowerCase() || ".jpg";
-      const name = `${String(index).padStart(2, "0")}-${slug(title.replace(/\.[^.]+$/, "")) || "anh"}${ext === ".jpeg" ? ".jpg" : ext}`;
+      const name = `${String(index).padStart(2, "0")}-${slug(title.replace(/\.[^.]+$/, "")) || "anh"}${ext}`;
       const file = join(outDir, name);
       writeFileSync(file, data);
       photos.push({ index, title, file, width, height, ...(driveId ? { driveId } : {}) });

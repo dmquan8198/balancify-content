@@ -15,8 +15,8 @@ const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v
 
 const errText = (e: unknown) => (e instanceof Error ? e.message : String(e));
 
-/** Display size of a photo after EXIF auto-rotation (orientations 5–8 swap width and height). */
-export async function orientedSize(input: string | Buffer): Promise<{ width: number; height: number }> {
+/** Display size (after EXIF auto-rotation) and detected format of a photo. Orientations 5–8 swap width and height. */
+export async function photoInfo(input: string | Buffer): Promise<{ width: number; height: number; format: string }> {
   if (typeof input === "string" && !existsSync(input)) throw new PhotoError(`Không tìm thấy file ảnh: ${input}`);
   let meta: Metadata;
   try {
@@ -25,7 +25,17 @@ export async function orientedSize(input: string | Buffer): Promise<{ width: num
     throw new PhotoError(`Không đọc được ảnh (có thể sai định dạng hoặc thiếu codec, ví dụ HEIC): ${errText(e)}`);
   }
   const swap = (meta.orientation ?? 1) >= 5;
-  return { width: (swap ? meta.height : meta.width) ?? 0, height: (swap ? meta.width : meta.height) ?? 0 };
+  return {
+    width: (swap ? meta.height : meta.width) ?? 0,
+    height: (swap ? meta.width : meta.height) ?? 0,
+    format: meta.format ?? "unknown",
+  };
+}
+
+/** Display size of a photo after EXIF auto-rotation. */
+export async function orientedSize(input: string | Buffer): Promise<{ width: number; height: number }> {
+  const { width, height } = await photoInfo(input);
+  return { width, height };
 }
 
 /** Largest crop of a w×h photo with the target frame's aspect ratio. */
