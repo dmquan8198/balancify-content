@@ -1,8 +1,9 @@
 import { spawnSync } from "node:child_process";
-import { mkdtempSync } from "node:fs";
+import { mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { makeFlatlayFixture } from "./fixtures/flatlay";
 
 function cli(...args: string[]) {
   const r = spawnSync("npx", ["tsx", "src/cli/f1.ts", ...args], { cwd: process.cwd(), encoding: "utf8" });
@@ -43,5 +44,15 @@ describe("CLI f1", () => {
     expect(r.code).toBe(1);
     expect(r.out.trimStart()).toMatch(/^Lỗi: Không có colorway "hot red".*easy mint/);
     noStack(r.out);
+  });
+
+  it("nhiều lỗi được nối gọn, không có \".;\"", async () => {
+    const photo = join(out, "light.jpg");
+    writeFileSync(photo, await makeFlatlayFixture("#B8C6B8", "#F4F2EE"));
+    const r = cli("--photo", photo, "--colorway", "easy mint", "--out", out);
+    expect(r.code).toBe(1);
+    expect(r.out).toMatch(/feed: .*; /);
+    expect(r.out).not.toContain(".;");
+    expect(r.out).not.toContain("đổi sang trắng");
   });
 });

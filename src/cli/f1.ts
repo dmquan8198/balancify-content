@@ -30,6 +30,9 @@ function parse() {
   }
 }
 
+/** Issue messages end with "."; drop it before joining so the line has no ".;". */
+const joinMessages = (messages: string[]) => messages.map((m) => m.replace(/\.\s*$/, "")).join("; ");
+
 try {
   const args = parse();
   const report = await runF1({
@@ -40,7 +43,7 @@ try {
   });
   for (const f of report.formats) {
     const note = f.nameColor === "fallback" ? " (tên colorway đổi sang trắng vì màu túi không đủ tương phản)" : "";
-    console.log(`${f.format}: ${f.file} — ${f.checks.length === 0 ? "đạt" : f.checks.map((c) => c.message).join("; ")}${note}`);
+    console.log(`${f.format}: ${f.file} — ${f.checks.length === 0 ? "đạt" : joinMessages(f.checks.map((c) => c.message))}${note}`);
   }
   for (const issue of report.lint) console.log(`chữ: ${issue.message}`);
   console.log(report.ok ? "KẾT QUẢ: ĐẠT" : "KẾT QUẢ: CÓ LỖI");
