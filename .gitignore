@@ -3,5 +3,11 @@ out/
 *.jpg
 *.jpeg
 *.heic
+*.heif
+*.webp
+*.avif
+*.gif
+*.tif
+*.tiff
 *.png
 !tests/golden/*.png
