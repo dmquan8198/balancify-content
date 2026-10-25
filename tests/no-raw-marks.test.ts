@@ -10,8 +10,8 @@ function tsFiles(dir: string): string[] {
 }
 
 describe("mã nguồn", () => {
-  it("không chứa ký tự dấu kết hợp (U+0300–U+036F) viết trần", () => {
-    const offenders = tsFiles(join(process.cwd(), "src")).filter((f) => /[̀-ͯ]/.test(readFileSync(f, "utf8")));
+  it("không chứa ký tự dấu kết hợp (U+0300–U+036F) viết trần (src/ và tests/)", () => {
+    const offenders = ["src", "tests"].flatMap((root) => tsFiles(join(process.cwd(), root))).filter((f) => /[\u0300-\u036f]/.test(readFileSync(f, "utf8")));
     expect(offenders).toEqual([]);
   });
 });
