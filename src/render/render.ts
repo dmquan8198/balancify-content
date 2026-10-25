@@ -28,16 +28,33 @@ const GLYPH_MASK_CSS =
   "body *:not([data-text]):not([data-text] *){visibility:hidden !important}" +
   "[data-text],[data-text] *{visibility:visible !important;color:#000 !important;opacity:1 !important;text-shadow:none !important;background:transparent !important}";
 
-let browser: Browser | null = null;
+let browserPromise: Promise<Browser> | null = null;
 
-async function getBrowser(): Promise<Browser> {
-  browser ??= await chromium.launch();
-  return browser;
+/** Launches Chromium once, even when several renders start at the same time. */
+function getBrowser(): Promise<Browser> {
+  if (browserPromise) return browserPromise;
+  const p = chromium.launch().then(
+    (b) => {
+      b.on("disconnected", () => {
+        if (browserPromise === p) browserPromise = null;
+      });
+      return b;
+    },
+    (err: unknown) => {
+      if (browserPromise === p) browserPromise = null;
+      throw err;
+    },
+  );
+  browserPromise = p;
+  return p;
 }
 
 export async function closeBrowser(): Promise<void> {
-  await browser?.close();
-  browser = null;
+  const p = browserPromise;
+  browserPromise = null;
+  if (!p) return;
+  const b = await p.catch(() => null);
+  await b?.close();
 }
 
 export async function renderHtml(html: string, width: number, height: number, requiredFonts: string[] = []): Promise<RenderResult> {
