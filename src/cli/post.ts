@@ -6,7 +6,7 @@ import { checkPlan, runPost } from "../post/run";
 import { assertOutsideRepo, OutsideRepoError } from "./paths";
 import { parseOrUsage, registerKnownError, runCli, UsageError } from "./run";
 
-const USAGE = "Cách dùng: npm run post -- --plan <plan.json> [--cards <cards.json>] (--check | --out <thư mục>)";
+const USAGE = "Cách dùng: npm run post -- --plan <plan.json> --cards <cards.json> (--check | --out <thư mục>)";
 
 registerKnownError(PlanError);
 registerKnownError(OutsideRepoError);
@@ -29,11 +29,11 @@ await runCli(USAGE, async () => {
   const { values } = parseOrUsage(() =>
     parseArgs({ options: { plan: { type: "string" }, cards: { type: "string" }, out: { type: "string" }, check: { type: "boolean", default: false } } }),
   );
-  if (!values.plan || (!values.check && !values.out)) throw new UsageError("");
+  if (!values.plan || !values.cards || (!values.check && !values.out)) throw new UsageError("");
   if (values.check && values.out) throw new UsageError("Chỉ dùng một trong hai: --check hoặc --out.");
   if (values.out) assertOutsideRepo(values.out);
   const plan = readJson(values.plan) as PostPlan;
-  const cards = values.cards ? (readJson(values.cards) as PhotoCard[]) : [];
+  const cards = readJson(values.cards) as PhotoCard[];
   if (!Array.isArray(cards)) throw new PlanError(`Không đọc được ${values.cards}: phải là một danh sách thẻ ảnh.`);
 
   if (values.check) {

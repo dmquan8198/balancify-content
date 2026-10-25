@@ -84,6 +84,8 @@ export function validatePlan(plan: PostPlan, rb: Rulebook, cards: PhotoCard[] = 
     return issues;
   }
 
+  if (cards.length === 0) warn("Không có thẻ ảnh — bỏ qua kiểm tra thẻ.");
+
   const pillar = rb.pillars[plan.pillar];
   if (!pillar) {
     error(`Trụ "${plan.pillar}" không có trong rulebook/pillars.yaml (có: ${Object.keys(rb.pillars).join(", ")}).`);

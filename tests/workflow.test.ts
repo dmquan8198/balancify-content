@@ -87,7 +87,9 @@ describe("chuỗi ingest → contact → cards → post", () => {
     const folder = mkdtempSync(join(tmpdir(), "workflow-unrelated-"));
     const keep = join(folder, "keep.txt");
     writeFileSync(keep, "giữ lại");
-    const r = run("post", "--plan", plan, "--out", folder);
+    const cards = join(work, "cards.json");
+    writeFileSync(cards, "[]");
+    const r = run("post", "--plan", plan, "--cards", cards, "--out", folder);
     expect(r.code).toBe(1);
     expect(r.out).toContain("Lỗi: Thư mục --out đã có nội dung khác");
     expect(r.out).not.toMatch(/\n\s+at /);
@@ -99,7 +101,9 @@ describe("chuỗi ingest → contact → cards → post", () => {
     const work = mkdtempSync(join(tmpdir(), "workflow-"));
     const plan = join(work, "plan.json");
     writeFileSync(plan, "{}");
-    const r = run("post", "--plan", plan, "--check", "--out", join(work, "out"));
+    const cards = join(work, "cards.json");
+    writeFileSync(cards, "[]");
+    const r = run("post", "--plan", plan, "--cards", cards, "--check", "--out", join(work, "out"));
     expect(r.code).toBe(2);
     expect(existsSync(join(work, "out"))).toBe(false);
   });
@@ -108,7 +112,9 @@ describe("chuỗi ingest → contact → cards → post", () => {
     const work = mkdtempSync(join(tmpdir(), "workflow-"));
     const plan = join(work, "plan.json");
     writeFileSync(plan, JSON.stringify({ goal: "B", pillar: "FEEL", family: "F1", slides: [], caption: "", hashtags: [] }));
-    const r = run("post", "--plan", plan, "--check");
+    const cards = join(work, "cards.json");
+    writeFileSync(cards, "[]");
+    const r = run("post", "--plan", plan, "--cards", cards, "--check");
     expect(r.code).toBe(1);
     expect(r.out.trimStart().startsWith("Lỗi: Kế hoạch bài có")).toBe(true);
     expect(r.out).toMatch(/Mục tiêu B không thuộc trụ FEEL/);

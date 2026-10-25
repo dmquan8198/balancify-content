@@ -122,4 +122,11 @@ describe("validatePlan", () => {
     expect(errors(plan({ hashtags: ["#a b"] })).join("\n")).toMatch(/Hashtag/);
     expect(errors(plan({ hashtags: ["#túi_xinh1"] }))).toEqual([]);
   });
+
+  it("không có thẻ ảnh thì cảnh báo, có thẻ thì không", () => {
+    const warns = (cards: PhotoCard[]) => validatePlan(plan(), rb, cards).filter((i) => i.severity === "warn").map((i) => i.message);
+    expect(warns([])).toContain("Không có thẻ ảnh — bỏ qua kiểm tra thẻ.");
+    const card: PhotoCard = { file: photo, colorway: "easy mint", kind: "flatlay", person: false, quality: "ok", focus: { x: 0.5, y: 0.5 }, note: "", fits: { feed: true, story: true } };
+    expect(warns([card])).not.toContain("Không có thẻ ảnh — bỏ qua kiểm tra thẻ.");
+  });
 });
