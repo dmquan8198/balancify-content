@@ -156,4 +156,26 @@ describe("runPost", () => {
     await expect(runPost(plan, join(dir, "out"))).rejects.toThrow(PlanError);
     expect(existsSync(join(dir, "out"))).toBe(false);
   });
+
+  it("từ chối kế hoạch có ảnh nằm trong --out, ảnh và gói cũ còn nguyên", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "post-"));
+    const out = join(dir, "out");
+    await runPost(await threeSlides(dir), out);
+    const inside = join(out, "inside.jpg");
+    writeFileSync(inside, await makeFlatlayFixture());
+    const plan: PostPlan = {
+      goal: "C",
+      pillar: "FEEL",
+      family: "F1",
+      slides: [{ photo: inside, colorway: "easy mint", why: "x" }],
+      caption: "Mình không làm ra một cái túi. Mình làm ra một cái ôm mang đi được.",
+      hashtags: ["#dailyhugbag"],
+    };
+    const before = readdirSync(out).sort();
+    await expect(runPost(plan, out)).rejects.toThrow(/Slide 1: ảnh nằm trong thư mục --out/);
+    await expect(runPost(plan, out)).rejects.toBeInstanceOf(PlanError);
+    expect(existsSync(inside)).toBe(true);
+    expect(readdirSync(out).sort()).toEqual(before);
+    expect(existsSync(join(out, "slide-3"))).toBe(true);
+  });
 });

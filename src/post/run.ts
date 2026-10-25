@@ -1,6 +1,6 @@
 import { randomBytes } from "node:crypto";
 import { mkdirSync, renameSync, rmSync, writeFileSync } from "node:fs";
-import { join, relative, resolve } from "node:path";
+import { isAbsolute, join, relative, resolve, sep } from "node:path";
 import type { PhotoCard } from "../cards/cards";
 import { contactSheet } from "../contact/sheet";
 import { runF1, type F1Report } from "../pipeline/f1";
@@ -65,6 +65,12 @@ export async function runPost(plan: PostPlan, outDir: string, cards: PhotoCard[]
   const warnings = await checkPlan(plan, cards);
   assertSafeOutDir(outDir, process.cwd());
   const finalDir = resolve(outDir);
+  for (const [i, s] of plan.slides.entries()) {
+    const rel = relative(finalDir, resolve(s.photo));
+    if (rel === "" || (!isAbsolute(rel) && rel !== ".." && !rel.startsWith(`..${sep}`))) {
+      throw new PlanError(`Slide ${i + 1}: ảnh nằm trong thư mục --out (${s.photo}) — sẽ bị xoá khi thay gói duyệt; hãy để ảnh ở thư mục khác.`);
+    }
+  }
   const tmpDir = `${finalDir}.tmp-${randomBytes(4).toString("hex")}`;
   mkdirSync(tmpDir, { recursive: true });
   try {
