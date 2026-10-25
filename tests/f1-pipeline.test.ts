@@ -14,6 +14,11 @@ describe("slug", () => {
     expect(slug("Easy Mint")).toBe("easy-mint");
     expect(slug("Đi làm vui")).toBe("di-lam-vui");
   });
+
+  it("mã nguồn không chứa ký tự tổ hợp (dấu) dạng thô", () => {
+    const src = readFileSync(join(process.cwd(), "src/pipeline/f1.ts"), "utf8");
+    expect(src).not.toMatch(/[\u0300-\u036f]/);
+  });
 });
 
 describe("runF1", () => {
