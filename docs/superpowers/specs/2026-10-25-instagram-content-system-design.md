@@ -89,6 +89,7 @@ Bốn file trong `rulebook/`.
 - **Font:** Fraunces (tiêu đề), Be Vietnam Pro (nội dung), Patrick Hand cho tên colorway (tạm, chờ font chính thức — mục 11).
 - **Logo:** balance glyph — hai nửa tròn lệch nhau, nửa trái cao hơn. Không xoay, không kéo méo, không đổi màu ngoài trắng (trên nền tối hoặc nền màu) và màu chữ đậm (trên nền sáng).
 - **Element được phép:** tên colorway bằng chữ viết tay, viết thường, xoay nghiêng, tô đúng màu túi, đặt ở cạnh ảnh.
+  Tên colorway tô màu túi; nếu không đủ tương phản với nền ảnh tại vị trí đó thì tự đổi sang trắng.
 - **Element bị cấm:** sparkle, khung viền, sticker, gradient màu, chữ nhiều màu.
 - **Luật ảnh flatlay:** chụp thẳng từ trên xuống; nền xám đá; túi nằm giữa, glyph lộ rõ; 4–6 món đồ phối màu theo colorway, xếp quanh phía trên túi.
 - **Luật ảnh đời thường:** chụp điện thoại, ánh sáng tự nhiên, không studio; chỉ chỉnh nhẹ (cân sáng, cân màu), không làm bóng bẩy.
@@ -111,7 +112,7 @@ Mỗi họ có hai biến thể: Feed 1080×1350 và Story 1080×1920.
 
 | Họ | Cấu trúc | Chữ |
 |---|---|---|
-| **F1 Flatlay colorway** | 1 ảnh, hoặc carousel tối đa 4 slide (mỗi colorway một slide) | Tên colorway viết tay + nhãn nhỏ "Daily Hug Bag". Không thêm chữ nào khác trên ảnh. |
+| **F1 Flatlay colorway** | 1 ảnh, hoặc carousel tối đa 4 slide (mỗi colorway một slide) | Tên colorway viết tay + nhãn nhỏ "Daily Hug Bag". Không thêm chữ nào khác trên ảnh. Story: nhãn 'Daily Hug Bag' ở góc trên trái, ngay dưới vùng an toàn phía trên; Feed: góc dưới trái. |
 | **F2 Carousel đời thường** | 3–6 slide ảnh | Slide 1: hook, một câu tiếng Việt. Slide giữa: gần như không chữ. Slide cuối: câu chốt. |
 | **F3 Carousel hữu ích / bằng chứng** | 4–7 slide, nhiều chữ, đáng lưu | Mỗi slide một ý. Chủ đề ví dụ: trong túi mình có gì; so sánh size với laptop 14"; sắp xếp túi đi làm. |
 | **F4 Thông báo chương trình** | 1–3 slide, khung cố định | Tên chương trình, thời gian, điều kiện, CTA "comment HUG". |
