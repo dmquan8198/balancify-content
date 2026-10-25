@@ -88,6 +88,12 @@ describe("rulebook", () => {
     bad((rb) => (rb.visual.contrast = undefined), /contrast/);
   });
 
+  it("colorway_name_fallback phải là một khóa trong neutrals", () => {
+    expect(loadRulebook().visual.colorway_name_fallback).toBe("white");
+    bad((rb) => delete rb.visual.colorway_name_fallback, /colorway_name_fallback/);
+    bad((rb) => (rb.visual.colorway_name_fallback = "pink"), /colorway_name_fallback/);
+  });
+
   it("mỗi pillar phải có goals và photo hợp lệ", () => {
     bad((rb) => (rb.pillars.FEEL.goals = []), /FEEL.*goals/);
     bad((rb) => (rb.pillars.FEEL.goals = ["X"]), /FEEL.*goals/);

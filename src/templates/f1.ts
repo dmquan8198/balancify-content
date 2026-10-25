@@ -8,6 +8,8 @@ export interface F1Input {
   colorway: string;
   format: FormatName;
   label?: string;
+  /** Hex colour for the colorway name; defaults to the colorway accent. */
+  nameColor?: string;
 }
 
 export interface TemplateOutput {
@@ -34,7 +36,7 @@ ${fontFaceCss(rb)}
 html,body{margin:0;padding:0}
 body{width:${fmt.width}px;height:${fmt.height}px;position:relative;overflow:hidden;background:${rb.visual.neutrals.ground}}
 .photo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
-.name{position:absolute;left:${fmt.width - 150}px;top:${nameTop}px;transform:translate(-50%,-50%) rotate(72deg);white-space:nowrap;font-family:"${hand.family}";font-weight:${hand.weight};font-size:64px;line-height:1;color:${colorway.accent}}
+.name{position:absolute;left:${fmt.width - 150}px;top:${nameTop}px;transform:translate(-50%,-50%) rotate(72deg);white-space:nowrap;font-family:"${hand.family}";font-weight:${hand.weight};font-size:64px;line-height:1;color:${input.nameColor ?? colorway.accent}}
 .label{position:absolute;left:56px;bottom:${labelBottom}px;font-family:"${label.family}";font-weight:${label.weight};font-size:26px;letter-spacing:.08em;line-height:1.3;color:${rb.visual.neutrals.white}}
 </style></head><body>
 <img class="photo" src="${photo}" alt="">

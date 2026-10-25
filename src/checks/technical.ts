@@ -6,6 +6,8 @@ import { contrastRatio, hexToRgb, parseCssColor, type Rgb } from "./contrast";
 export interface CheckIssue {
   check: "size" | "safe_zone" | "contrast" | "palette";
   message: string;
+  /** `data-text` id of the element the issue is about, when there is one. */
+  textId?: string;
 }
 
 const TOLERANCE = 0.5;
@@ -79,13 +81,14 @@ export async function checkContrast(r: RenderResult, boxes: TextBox[], rules: Vi
       }
     }
     if (glyphs === 0) {
-      issues.push({ check: "contrast", message: `Chữ "${b.id}": không tìm thấy nét chữ để kiểm tra tương phản.` });
+      issues.push({ check: "contrast", textId: b.id, message: `Chữ "${b.id}": không tìm thấy nét chữ để kiểm tra tương phản.` });
       continue;
     }
     const share = low / glyphs;
     if (share > MAX_LOW_CONTRAST_SHARE) {
       issues.push({
         check: "contrast",
+        textId: b.id,
         message: `Chữ "${b.id}" có ${(share * 100).toFixed(1)}% nét chữ tương phản dưới ${min}:1 (cho phép tối đa ${MAX_LOW_CONTRAST_SHARE * 100}%).`,
       });
     }

@@ -6,6 +6,8 @@ colorways:
   easy mint: { accent: "#B8C6B8", provisional: true }
   off duty pink: { accent: "#EDCBC9", provisional: true }
   not tired black: { accent: "#252728", provisional: true }
+# Colour (a key of neutrals) for the colorway name when the accent lacks contrast against the photo.
+colorway_name_fallback: white
 fonts:
   display: { family: Fraunces, weight: "100 900", file: assets/fonts/Fraunces.ttf }
   body: { family: Be Vietnam Pro, weight: 400, file: assets/fonts/BeVietnamPro-Regular.ttf }

@@ -41,6 +41,8 @@ export interface Format {
 export interface Visual {
   neutrals: Record<string, string>;
   colorways: Record<string, Colorway>;
+  /** Key of `neutrals` used for the colorway name when the accent lacks contrast. */
+  colorway_name_fallback: string;
   fonts: Record<"display" | "body" | "body_semibold" | "handwriting", FontSpec>;
   banned_elements: string[];
   formats: { feed: Format; story: Format };

@@ -19,6 +19,8 @@ export interface F1FormatReport {
   format: FormatName;
   file: string;
   checks: CheckIssue[];
+  /** Whether the colorway name kept the accent or switched to `colorway_name_fallback`. */
+  nameColor: "accent" | "fallback";
 }
 
 export interface F1Report {
@@ -49,12 +51,20 @@ export async function runF1(opts: F1Options): Promise<F1Report> {
   for (const format of ["feed", "story"] as const) {
     const fmt = rb.visual.formats[format];
     const photoJpeg = await preparePhoto(opts.photo, fmt.width, fmt.height, opts.focus);
-    const t = f1Html(rb, { photoJpeg, colorway: opts.colorway, format, label });
-    const rendered = await renderHtml(t.html, t.width, t.height, t.fonts);
-    const checks = await runTechnicalChecks(rendered, fmt, rb.visual);
+    const render = async (nameColor?: string) => {
+      const t = f1Html(rb, { photoJpeg, colorway: opts.colorway, format, label, nameColor });
+      const r = await renderHtml(t.html, t.width, t.height, t.fonts);
+      return { rendered: r, checks: await runTechnicalChecks(r, fmt, rb.visual) };
+    };
+    let { rendered, checks } = await render();
+    let nameColor: F1FormatReport["nameColor"] = "accent";
+    if (checks.some((c) => c.check === "contrast" && c.textId === "colorway-name")) {
+      ({ rendered, checks } = await render(rb.visual.neutrals[rb.visual.colorway_name_fallback]));
+      nameColor = "fallback";
+    }
     const file = join(opts.outDir, `f1-${slug(opts.colorway)}-${format}.png`);
     writeFileSync(file, rendered.png);
-    formats.push({ format, file, checks });
+    formats.push({ format, file, checks, nameColor });
   }
 
   const report: F1Report = { colorway: opts.colorway, lint, formats, ok: !hasErrors(lint) && formats.every((f) => f.checks.length === 0) };

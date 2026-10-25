@@ -57,6 +57,10 @@ export function validate(rb: Rulebook): void {
   for (const [name, hex] of Object.entries(visual.neutrals)) {
     req(typeof hex === "string" && HEX.test(hex), `màu nền "${name}" không phải hex 6 số: ${hex}`);
   }
+  req(
+    isStr(visual.colorway_name_fallback) && Object.hasOwn(visual.neutrals, visual.colorway_name_fallback),
+    `visual.colorway_name_fallback phải là một khóa trong neutrals (${Object.keys(visual.neutrals).join(", ")}), đang là ${visual.colorway_name_fallback}`,
+  );
   for (const key of FONT_KEYS) req(visual.fonts?.[key]?.file, `visual.fonts.${key} thiếu`);
 
   req(isObj(visual.formats), "visual.formats thiếu");

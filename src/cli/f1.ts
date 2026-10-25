@@ -25,7 +25,8 @@ try {
     focus: { x: Number(values["focus-x"]), y: Number(values["focus-y"]) },
   });
   for (const f of report.formats) {
-    console.log(`${f.format}: ${f.file} — ${f.checks.length === 0 ? "đạt" : f.checks.map((c) => c.message).join("; ")}`);
+    const note = f.nameColor === "fallback" ? " (tên colorway đổi sang trắng vì màu túi không đủ tương phản)" : "";
+    console.log(`${f.format}: ${f.file} — ${f.checks.length === 0 ? "đạt" : f.checks.map((c) => c.message).join("; ")}${note}`);
   }
   for (const issue of report.lint) console.log(`chữ: ${issue.message}`);
   console.log(report.ok ? "KẾT QUẢ: ĐẠT" : "KẾT QUẢ: CÓ LỖI");

@@ -48,6 +48,7 @@ describe("checkContrast", () => {
     const issues = await run("#3B3D3F", halves + label("font-size:48px;color:#ffffff;white-space:nowrap", "Daily Hug Bag Hug"));
     expect(issues).toHaveLength(1);
     expect(issues[0].message).toMatch(/%/);
+    expect(issues[0].textId).toBe("t");
   });
 
   it("chữ trắng hoàn toàn trên nền #3B3D3F đạt", async () => {

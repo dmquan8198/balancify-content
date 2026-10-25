@@ -15,6 +15,12 @@ describe("f1Html", () => {
     expect(t.fonts).toEqual(["Patrick Hand", "Be Vietnam Pro"]);
   });
 
+  it("nameColor thay màu tên colorway", () => {
+    const t = f1Html(rb, { photoJpeg, colorway: "not tired black", format: "feed", nameColor: "#FFFFFF" });
+    expect(t.html).not.toContain("color:#252728");
+    expect(t.html).toMatch(/\.name\{[^}]*color:#FFFFFF/);
+  });
+
   it("báo lỗi với colorway không có trong rulebook", () => {
     expect(() => f1Html(rb, { photoJpeg, colorway: "hot red", format: "feed" })).toThrow(/hot red/);
   });
