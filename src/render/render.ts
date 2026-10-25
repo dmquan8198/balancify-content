@@ -18,8 +18,15 @@ export interface RenderResult {
   png: Buffer;
   /** Same page with every `data-text` element hidden, for sampling what sits behind text. */
   background: Buffer;
+  /** Same page with the photo/background hidden and every `data-text` glyph painted solid black on white. */
+  glyphMask: Buffer;
   textBoxes: TextBox[];
 }
+
+const GLYPH_MASK_CSS =
+  "html,body{background:#fff !important}" +
+  "body *:not([data-text]):not([data-text] *){visibility:hidden !important}" +
+  "[data-text],[data-text] *{visibility:visible !important;color:#000 !important;opacity:1 !important;text-shadow:none !important;background:transparent !important}";
 
 let browser: Browser | null = null;
 
@@ -62,9 +69,12 @@ export async function renderHtml(html: string, width: number, height: number, re
       }),
     );
     const png = await page.screenshot({ type: "png" });
+    const maskStyle = await page.addStyleTag({ content: GLYPH_MASK_CSS });
+    const glyphMask = await page.screenshot({ type: "png" });
+    await maskStyle.evaluate((n) => (n as Element).remove());
     await page.addStyleTag({ content: "[data-text]{visibility:hidden !important}" });
     const background = await page.screenshot({ type: "png" });
-    return { png, background, textBoxes };
+    return { png, background, glyphMask, textBoxes };
   } finally {
     await page.close();
   }

@@ -32,21 +32,62 @@ export function checkSafeZone(boxes: TextBox[], fmt: Format): CheckIssue[] {
   return issues;
 }
 
-export async function checkContrast(background: Buffer, boxes: TextBox[], rules: Visual["contrast"]): Promise<CheckIssue[]> {
-  const { width: W = 0, height: H = 0 } = await sharp(background).metadata();
+/** Share of glyph pixels allowed below the contrast threshold (covers anti-aliased edges). */
+export const MAX_LOW_CONTRAST_SHARE = 0.05;
+
+interface RawImage {
+  data: Buffer;
+  width: number;
+  height: number;
+  channels: number;
+}
+
+async function decode(buf: Buffer): Promise<RawImage> {
+  const { data, info } = await sharp(buf).removeAlpha().raw().toBuffer({ resolveWithObject: true });
+  return { data, width: info.width, height: info.height, channels: info.channels };
+}
+
+const luma = (img: RawImage, i: number) => 0.2126 * img.data[i] + 0.7152 * img.data[i + 1] + 0.0722 * img.data[i + 2];
+
+/**
+ * For each text box, finds glyph pixels in the mask and compares the rendered pixel against the
+ * background pixel at the same spot. Fails when more than MAX_LOW_CONTRAST_SHARE of them are too low.
+ */
+export async function checkContrast(r: RenderResult, boxes: TextBox[], rules: Visual["contrast"]): Promise<CheckIssue[]> {
+  const [png, bg, mask] = await Promise.all([decode(r.png), decode(r.background), decode(r.glyphMask)]);
+  const W = mask.width;
+  const H = mask.height;
   const issues: CheckIssue[] = [];
   for (const b of boxes) {
-    const left = Math.max(0, Math.floor(b.x));
-    const top = Math.max(0, Math.floor(b.y));
-    const width = Math.min(W - left, Math.ceil(b.width));
-    const height = Math.min(H - top, Math.ceil(b.height));
-    if (width < 1 || height < 1) continue;
-    const { channels } = await sharp(background).extract({ left, top, width, height }).stats();
-    const behind: Rgb = [channels[0].mean, channels[1].mean, channels[2].mean];
-    const ratio = contrastRatio(parseCssColor(b.color), behind);
+    const x0 = Math.max(0, Math.floor(b.x));
+    const y0 = Math.max(0, Math.floor(b.y));
+    const x1 = Math.min(W, Math.ceil(b.x + b.width));
+    const y1 = Math.min(H, Math.ceil(b.y + b.height));
     const min = b.fontSizePx >= rules.large_px ? rules.min_large : rules.min_small;
-    if (ratio < min) {
-      issues.push({ check: "contrast", message: `Chữ "${b.id}" tương phản ${ratio.toFixed(2)}:1, cần ít nhất ${min}:1.` });
+    let glyphs = 0;
+    let low = 0;
+    for (let y = y0; y < y1; y++) {
+      for (let x = x0; x < x1; x++) {
+        const i = (y * W + x) * mask.channels;
+        if (luma(mask, i) >= 128) continue;
+        glyphs++;
+        const pi = (y * png.width + x) * png.channels;
+        const bi = (y * bg.width + x) * bg.channels;
+        const fg: Rgb = [png.data[pi], png.data[pi + 1], png.data[pi + 2]];
+        const behind: Rgb = [bg.data[bi], bg.data[bi + 1], bg.data[bi + 2]];
+        if (contrastRatio(fg, behind) < min) low++;
+      }
+    }
+    if (glyphs === 0) {
+      issues.push({ check: "contrast", message: `Chữ "${b.id}": không tìm thấy nét chữ để kiểm tra tương phản.` });
+      continue;
+    }
+    const share = low / glyphs;
+    if (share > MAX_LOW_CONTRAST_SHARE) {
+      issues.push({
+        check: "contrast",
+        message: `Chữ "${b.id}" có ${(share * 100).toFixed(1)}% nét chữ tương phản dưới ${min}:1 (cho phép tối đa ${MAX_LOW_CONTRAST_SHARE * 100}%).`,
+      });
     }
   }
   return issues;
@@ -66,6 +107,6 @@ export async function runTechnicalChecks(r: RenderResult, fmt: Format, visual: V
     ...(await checkSize(r.png, fmt)),
     ...checkSafeZone(r.textBoxes, fmt),
     ...checkPalette(r.textBoxes, visual),
-    ...(await checkContrast(r.background, r.textBoxes, visual.contrast)),
+    ...(await checkContrast(r, r.textBoxes, visual.contrast)),
   ];
 }

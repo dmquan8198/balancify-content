@@ -1,7 +1,7 @@
 import sharp from "sharp";
-import { describe, expect, it } from "vitest";
+import { afterAll, describe, expect, it } from "vitest";
 import { checkContrast, checkPalette, checkSafeZone, checkSize } from "../src/checks/technical";
-import type { TextBox } from "../src/render/render";
+import { closeBrowser, renderHtml, type TextBox } from "../src/render/render";
 import { loadRulebook } from "../src/rulebook/load";
 
 const story = { width: 1080, height: 1920, safe_top: 250, safe_bottom: 340 };
@@ -32,17 +32,45 @@ describe("checkSafeZone", () => {
 });
 
 describe("checkContrast", () => {
+  afterAll(closeBrowser);
+
+  const doc = (bg: string, text: string) =>
+    `<!doctype html><html><head><meta charset="utf-8"><style>html,body{margin:0}body{width:800px;height:400px;position:relative;background:${bg}}</style></head><body>${text}</body></html>`;
+  const run = async (bg: string, text: string) => {
+    const r = await renderHtml(doc(bg, text), 800, 400);
+    return checkContrast(r, r.textBoxes, contrast);
+  };
+  const label = (style: string, content = "Daily Hug Bag") =>
+    `<div data-text="t" style="position:absolute;left:40px;top:150px;font-family:sans-serif;font-weight:700;${style}">${content}</div>`;
+
+  it("chữ trắng vắt qua nền nửa trắng nửa tối bị bắt", async () => {
+    const halves = `<div style="position:absolute;left:0;top:0;width:400px;height:400px;background:#ffffff"></div>`;
+    const issues = await run("#3B3D3F", halves + label("font-size:48px;color:#ffffff;white-space:nowrap", "Daily Hug Bag Hug"));
+    expect(issues).toHaveLength(1);
+    expect(issues[0].message).toMatch(/%/);
+  });
+
+  it("chữ trắng hoàn toàn trên nền #3B3D3F đạt", async () => {
+    expect(await run("#3B3D3F", label("font-size:48px;color:#ffffff"))).toEqual([]);
+  });
+
+  it("chữ trắng mờ (opacity .15) trên nền #3B3D3F bị bắt", async () => {
+    expect(await run("#3B3D3F", label("font-size:48px;color:#ffffff;opacity:.15"))).toHaveLength(1);
+  });
+
   it("chữ trắng trên nền trắng bị bắt, chữ đen trên nền trắng đạt", async () => {
-    const bg = await solid(1080, 1920, "#ffffff");
-    expect(await checkContrast(bg, [box({ color: "rgb(255, 255, 255)" })], contrast)).toHaveLength(1);
-    expect(await checkContrast(bg, [box({ color: "rgb(0, 0, 0)" })], contrast)).toEqual([]);
+    expect(await run("#ffffff", label("font-size:30px;color:#ffffff"))).toHaveLength(1);
+    expect(await run("#ffffff", label("font-size:30px;color:#000000"))).toEqual([]);
   });
 
   it("chữ lớn dùng ngưỡng 3:1", async () => {
-    const bg = await solid(1080, 1920, "#ffffff");
-    // #8a8a8a on white ≈ 3.45:1 — fails small text, passes large text.
-    expect(await checkContrast(bg, [box({ color: "rgb(138, 138, 138)", fontSizePx: 16 })], contrast)).toHaveLength(1);
-    expect(await checkContrast(bg, [box({ color: "rgb(138, 138, 138)", fontSizePx: 64 })], contrast)).toEqual([]);
+    // #808080 on white ≈ 3.95:1 — fails small text, passes large text.
+    expect(await run("#ffffff", label("font-size:16px;color:#808080"))).toHaveLength(1);
+    expect(await run("#ffffff", label("font-size:120px;font-weight:900;color:#808080", "HUG"))).toEqual([]);
+  });
+
+  it("báo lỗi khi không tìm thấy nét chữ trong khối", async () => {
+    expect((await run("#ffffff", label("font-size:30px;color:#000000", "&nbsp;")))[0]?.message).toMatch(/không tìm thấy nét chữ/);
   });
 });
 
