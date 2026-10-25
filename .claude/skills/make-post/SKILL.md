@@ -12,11 +12,11 @@ Need: goal (B tương tác / C hình ảnh thương hiệu / D chương trình),
 - Only goal **C** (trụ FEEL, template F1 flatlay) is built. For B or D, say plainly that F2–F4 are not built yet and offer C instead; never silently switch.
 
 ## 1. Work folder
-`W = <your scratchpad>/posts/<YYYY-MM-DD>-<slug of a short title>/` — never inside the repo. Photos live in `W/photos`; renders go to `W/out` (a different folder — see step 5).
+`W = <your scratchpad>/posts/<YYYY-MM-DD>-<slug of a short title>/` — an **absolute** path outside the repo (never a relative path, never inside the repo: `ingest --out` and `post --out` refuse folders inside the repo). Photos live in `W/photos`; renders go to `W/out` (a different folder — see step 5).
 
 ## 2. Get photos
 Drive folder: `search_files` with `parentId = '<folderId>'` (page through `nextPageToken`). Keep `mimeType` image/jpeg, image/png, image/webp. List HEIC and files over ~4 MB separately — tell the user they can't be downloaded (ask for JPEG / smaller export) instead of trying.
-Download **one file per call, never in parallel** (parallel calls dropped the connector). Each large result is saved to a tool-results `.txt` path — collect those paths. If a result comes back inline instead, the file is tiny (below 1080 px); note it as too small, don't process it.
+Download **one file per call, never in parallel** (parallel calls dropped the connector). Each large result is saved to a tool-results `.txt` path — collect those paths. If a result comes back inline instead, the file is small in bytes — not necessarily in pixels (a well-compressed JPEG can still be large enough). Write that inline JSON result (`{content, id, mimeType, title}`) to a `.json` file in `W` (e.g. `W/downloads/<id>.json`) and ingest it like the others; ingest and the plan check measure the real size.
 Uploaded photos: use their local paths directly.
 Then: `npm run ingest -- --out W/photos <paths...>`. Relay every "Bỏ qua" line to the user.
 - Re-running ingest is safe: it only appends, and a file already ingested is reported "Đã có sẵn" and left alone. Use it to add photos later or retry failed ones.
@@ -28,10 +28,11 @@ Then: `npm run ingest -- --out W/photos <paths...>`. Relay every "Bỏ qua" line
 Write `W/cards.json`: one object per photo `{file (path from photos.json), colorway (the rulebook name, e.g. "easy mint", or null), kind: flatlay|lifestyle, person, quality: ok|blurry|dark|cluttered, focus: {x, y} (0–1, where the bag is), note}`. Then `npm run cards -- --file W/cards.json` and fix every "Lỗi thẻ" line.
 - **Never write `fits`.** The command measures it, drops any hand-written value and rewrites `cards.json` itself. A "Lỗi: Không đọc được …" means the JSON is broken; fix the file.
 - The card's colorway must be set and must equal the slide's colorway in the plan, or the plan check fails.
+- If you are not sure of a photo's colorway, set it to `null` and ask the user — never guess.
 
 ## 4. Gate 1 — two plans
-Write `W/plan-a.json` and `W/plan-b.json` (`{goal, pillar, family, slides: [{photo, colorway, focus?, why}], caption, hashtags}`), each different in a way that matters (photo choice / slide count / order). 1–4 slides. `photo` is the working-copy path from `photos.json`; every slide photo needs a card. Hashtags look like `#dailyhugbag` (letters, digits, underscore). Caption: Vietnamese, xưng "mình", follow rulebook/voice.yaml; use only facts in rulebook/brand.yaml product_facts. Voice errors in the caption block the plan check — fix the wording, do not argue with the linter.
-Check each: `npm run post -- --plan W/plan-a.json --cards W/cards.json --check`. Fix until "Kế hoạch hợp lệ." The check also measures each photo; "không đủ lớn" means pick another photo.
+Write `W/plan-a.json` and `W/plan-b.json` (`{goal, pillar, family, slides: [{photo, colorway, focus?, why}], caption, hashtags}`), each different in a way that matters (photo choice / slide count / order). 1–4 slides. `photo` is the working-copy path from `photos.json`; every slide photo needs a card. Hashtags look like `#dailyhugbag` (letters, digits, underscore). Caption: Vietnamese, xưng "mình", follow rulebook/voice.yaml; use only facts in rulebook/brand.yaml product_facts. Numbers in the caption (prices like 460.000đ / 460k, weights like 200g, sizes like 14") must match a value in product_facts, or the plan check fails with "con số … không có trong thông tin sản phẩm được phép nói". Voice errors in the caption block the plan check — fix the wording, do not argue with the linter.
+Check each: `npm run post -- --plan W/plan-a.json --cards W/cards.json --check`. `--cards` is required (exit 2 without it). Fix until "Kế hoạch hợp lệ." The check also measures each photo; "không đủ lớn" means pick another photo.
 Relay every "Cảnh báo" line (for example the same photo used twice) to the user together with the options.
 Show the user both options: per slide the photo number from the sheet, colorway and `why`; the caption. Send `W/sheet.jpg`. Wait for their choice or edits.
 
@@ -39,8 +40,8 @@ Show the user both options: per slide the photo number from the sheet, colorway 
 `npm run post -- --plan <chosen> --cards W/cards.json --out W/out`. Read `W/out/preview.jpg` and `W/out/review.md`.
 - `--check` and `--out` are separate runs; never pass both (exit 2).
 - `--out` is **replaced** on each run, so: use a NEW folder inside the work folder (`W/out`), never the repo or any folder that holds other files, and keep photos outside it (a plan whose photos sit inside `--out` is refused). It is accepted only when it does not exist, is empty, or is a previous pack (has the hidden `.post-pack` file); anything else fails with "Thư mục --out đã có nội dung khác" and nothing is touched.
-- Rendering goes to a temporary folder and swaps in only if every slide succeeded, so a failed run leaves the previous pack intact.
-- Verdict line in `review.md`: "KẾT QUẢ: ĐẠT", "KẾT QUẢ: ĐẠT (N cảnh báo — xem mục Cảnh báo)" or "KẾT QUẢ: CÓ LỖI".
+- Rendering goes to a temporary folder and is swapped in when the run completes — **including a run that completes with "KẾT QUẢ: CÓ LỖI"**, which replaces the previous pack. Only a run that stops with an error ("Lỗi: …", e.g. a plan error or a photo that cannot be read) leaves the previous pack intact.
+- Verdict line (printed by the command and identical in `review.md`): "KẾT QUẢ: ĐẠT", "KẾT QUẢ: ĐẠT (N cảnh báo — xem mục Cảnh báo)" or "KẾT QUẢ: CÓ LỖI".
 If "CÓ LỖI": fix the cause (other photo, different `focus`) and rerun, at most twice; then tell the user exactly what still fails. Never present a failing result as passing.
 
 ## 6. Gate 2 — review pack

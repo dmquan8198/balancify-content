@@ -57,8 +57,9 @@ export async function checkPlan(plan: PostPlan, cards: PhotoCard[] = []): Promis
 }
 
 /**
- * Renders into a temporary sibling folder and swaps it in for `outDir` only when every slide
- * succeeded, so a failed run leaves the previous results untouched and no stale slides remain.
+ * Renders into a temporary sibling folder and swaps it in for `outDir` when the run completes
+ * (also when checks fail and ok is false), so no stale slides remain; a run that throws leaves
+ * the previous results untouched.
  * Only replaces a folder that is missing, empty or a previous pack (see assertSafeOutDir).
  */
 export async function runPost(plan: PostPlan, outDir: string, cards: PhotoCard[] = []): Promise<PostResult> {

@@ -19,7 +19,7 @@ Hiện chỉ có template F1 (flatlay colorway) nên chỉ làm được mục t
 Lệnh Claude dùng (tham khảo): `npm run ingest`, `npm run contact`, `npm run cards`, `npm run post`, `npm run f1`.
 
 ### An toàn với `--out`
-`npm run post -- --out <thư mục>` **thay thế** thư mục đó mỗi lần chạy. Vì vậy lệnh chỉ chấp nhận thư mục chưa có, thư mục rỗng, hoặc gói duyệt do chính lệnh này tạo trước đó (có tệp ẩn `.post-pack`); thư mục có nội dung khác bị từ chối và không bị đụng tới. Không bao giờ dùng thư mục hiện tại, thư mục cha của nó, thư mục người dùng hoặc thư mục gốc. Ảnh nguồn không được nằm trong `--out`. Kết quả được dựng ở thư mục tạm và chỉ thay vào khi mọi slide thành công. `--check` và `--out` là hai lần chạy riêng.
+`npm run post -- --out <thư mục>` **thay thế** thư mục đó mỗi lần chạy. Vì vậy lệnh chỉ chấp nhận thư mục chưa có, thư mục rỗng, hoặc gói duyệt do chính lệnh này tạo trước đó (có tệp ẩn `.post-pack`); thư mục có nội dung khác bị từ chối và không bị đụng tới. Không bao giờ dùng thư mục hiện tại, thư mục cha của nó, thư mục người dùng hoặc thư mục gốc. Ảnh nguồn không được nằm trong `--out`. Kết quả được dựng ở thư mục tạm và thay vào khi lệnh chạy xong — kể cả khi kết quả là "CÓ LỖI"; chỉ khi lệnh dừng giữa chừng vì lỗi ("Lỗi: …") thì gói cũ mới được giữ nguyên. `ingest --out` và `post --out` từ chối thư mục nằm trong repo — dùng đường dẫn tuyệt đối ở ngoài repo (thư mục scratchpad). `post` bắt buộc có `--cards`. `--check` và `--out` là hai lần chạy riêng.
 
 ### Lệnh f1
 Lệnh tương ứng (Claude tự chạy):
