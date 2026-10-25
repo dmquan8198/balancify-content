@@ -26,7 +26,7 @@ export interface CardIssue {
   message: string;
 }
 
-const inUnit = (v: unknown) => typeof v === "number" && Number.isFinite(v) && v >= 0 && v <= 1;
+export const inUnit = (v: unknown) => typeof v === "number" && Number.isFinite(v) && v >= 0 && v <= 1;
 
 export async function completeCards(cards: PhotoCard[], rb: Rulebook): Promise<{ cards: PhotoCard[]; issues: CardIssue[] }> {
   const issues: CardIssue[] = [];
