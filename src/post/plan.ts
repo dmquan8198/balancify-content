@@ -1,6 +1,7 @@
 import { statSync } from "node:fs";
 import { resolve } from "node:path";
 import { inUnit, type PhotoCard } from "../cards/cards";
+import { unsupportedClaims } from "../lint/facts";
 import { lintText } from "../lint/voice";
 import type { Focus } from "../render/prepare";
 import { findColorway } from "../rulebook/colorway";
@@ -142,6 +143,9 @@ export function validatePlan(plan: PostPlan, rb: Rulebook, cards: PhotoCard[] = 
   for (const tag of plan.hashtags) {
     if (!tag.startsWith("#")) error(`Hashtag "${tag}" phải bắt đầu bằng #.`);
     else if (!/^#[\p{L}\p{N}_]+$/u.test(tag)) error(`Hashtag "${tag}" chỉ được gồm chữ, số và gạch dưới sau dấu #.`);
+  }
+  for (const claim of unsupportedClaims(plan.caption, rb.brand.product_facts)) {
+    error(`Caption: con số "${claim.match}" không có trong thông tin sản phẩm được phép nói (rulebook/brand.yaml).`);
   }
   for (const issue of lintText(`${plan.caption}\n${plan.hashtags.join(" ")}`, rb.voice)) {
     (issue.severity === "error" ? error : warn)(`Caption: ${issue.message}`);
