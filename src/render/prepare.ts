@@ -1,4 +1,4 @@
-import sharp from "sharp";
+import sharp, { type Metadata } from "sharp";
 
 export class PhotoError extends Error {}
 
@@ -12,9 +12,23 @@ const MIN_SHORT_SIDE = 1080;
 
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
 
+const errText = (e: unknown) => (e instanceof Error ? e.message : String(e));
+
 export async function preparePhoto(input: string | Buffer, width: number, height: number, focus: Focus = { x: 0.5, y: 0.5 }): Promise<Buffer> {
-  const oriented = await sharp(input).rotate().toBuffer();
-  const { width: w = 0, height: h = 0 } = await sharp(oriented).metadata();
+  if (!Number.isFinite(focus.x) || !Number.isFinite(focus.y)) {
+    throw new PhotoError(`Điểm lấy nét không hợp lệ (x=${focus.x}, y=${focus.y}); cần là số từ 0 đến 1.`);
+  }
+
+  let meta: Metadata;
+  try {
+    meta = await sharp(input).metadata();
+  } catch (e) {
+    throw new PhotoError(`Không đọc được ảnh (có thể sai định dạng hoặc thiếu codec, ví dụ HEIC): ${errText(e)}`);
+  }
+  // EXIF orientations 5–8 swap width and height once auto-rotated.
+  const swap = (meta.orientation ?? 1) >= 5;
+  const w = (swap ? meta.height : meta.width) ?? 0;
+  const h = (swap ? meta.width : meta.height) ?? 0;
   if (Math.min(w, h) < MIN_SHORT_SIDE) {
     throw new PhotoError(`Ảnh quá nhỏ (${w}×${h}); cạnh ngắn cần ít nhất ${MIN_SHORT_SIDE}px.`);
   }
@@ -22,13 +36,23 @@ export async function preparePhoto(input: string | Buffer, width: number, height
   const ratio = width / height;
   const cw = w / h > ratio ? Math.round(h * ratio) : w;
   const ch = w / h > ratio ? h : Math.round(w / ratio);
+  if (cw < width || ch < height) {
+    throw new PhotoError(`Vùng cắt ${cw}×${ch} nhỏ hơn khung đích ${width}×${height}; ảnh sẽ bị phóng to và mờ. Hãy dùng ảnh lớn hơn hoặc đúng chiều.`);
+  }
   const left = clamp(Math.round(focus.x * w - cw / 2), 0, w - cw);
   const top = clamp(Math.round(focus.y * h - ch / 2), 0, h - ch);
 
-  return sharp(oriented)
-    .extract({ left, top, width: cw, height: ch })
-    .resize(width, height)
-    .modulate({ brightness: 1.02, saturation: 1.05 })
-    .jpeg({ quality: 92 })
-    .toBuffer();
+  try {
+    // One pipeline, one JPEG encode: auto-rotate first so extract works in display coordinates.
+    return await sharp(input)
+      .rotate()
+      .extract({ left, top, width: cw, height: ch })
+      .resize(width, height)
+      .flatten({ background: "#ffffff" })
+      .modulate({ brightness: 1.02, saturation: 1.05 })
+      .jpeg({ quality: 92 })
+      .toBuffer();
+  } catch (e) {
+    throw new PhotoError(`Không xử lý được ảnh: ${errText(e)}`);
+  }
 }
