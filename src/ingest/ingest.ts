@@ -41,6 +41,7 @@ interface Loaded {
 
 function load(input: string): Loaded {
   if (!existsSync(input)) throw new PhotoError(`Không tìm thấy file: ${input}`);
+  if (!statSync(input).isFile()) throw new PhotoError(`Không phải file: ${input}`);
   if (!DRIVE_RESULT_EXT.has(extname(input).toLowerCase())) return { title: basename(input), data: readFileSync(input) };
 
   let parsed: { content?: unknown; id?: string; mimeType?: string; title?: string };
@@ -53,7 +54,7 @@ function load(input: string): Loaded {
   if (parsed.mimeType && !EXT_BY_MIME[parsed.mimeType]) {
     throw unsupported(parsed.mimeType);
   }
-  return { title: parsed.title ?? basename(input), mimeType: parsed.mimeType, driveId: parsed.id, data: Buffer.from(parsed.content, "base64") };
+  return { title: typeof parsed.title === "string" && parsed.title.trim() ? parsed.title : basename(input), mimeType: parsed.mimeType, driveId: parsed.id, data: Buffer.from(parsed.content, "base64") };
 }
 
 function readManifest(outDir: string): IngestedPhoto[] {
@@ -100,7 +101,7 @@ export async function ingest(inputs: string[], outDir: string): Promise<IngestRe
       const ext = EXT_BY_FORMAT[format];
       if (!ext) throw unsupported(format);
       const index = next;
-      const name = `${String(index).padStart(2, "0")}-${slug(title.replace(/\.[^.]+$/, "")) || "anh"}${ext}`;
+      const name = `${String(index).padStart(2, "0")}-${slug(basename(title, extname(title))) || "anh"}${ext}`;
       const file = join(outDir, name);
       writeFileSync(file, data);
       photos.push({ index, title, file, width, height, ...(driveId ? { driveId } : {}) });

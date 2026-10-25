@@ -1,4 +1,4 @@
-import { existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import sharp from "sharp";
@@ -100,5 +100,21 @@ describe("ingest", () => {
     expect(r.failures[1].reason).toContain("svg");
     expect(r.photos).toHaveLength(1);
     expect(r.photos[0].file).toBe(join(out, "01-tho.png"));
+  });
+
+  it("title Drive không hợp lệ → dùng tên file; thư mục → lỗi tiếng Việt", async () => {
+    const src = mkdtempSync(join(tmpdir(), "ingest-src-"));
+    const out = join(mkdtempSync(join(tmpdir(), "ingest-out-")), "photos");
+    const jpg = await sharp({ create: { width: 1200, height: 1600, channels: 3, background: "#888" } }).jpeg().toBuffer();
+    const drive = join(src, "Bo Suu Tap.txt");
+    writeFileSync(drive, JSON.stringify({ content: jpg.toString("base64"), id: "t1", mimeType: "image/jpeg", title: 42 }));
+    const dir = join(src, "thu-muc");
+    mkdirSync(dir);
+
+    const r = await ingest([drive, dir], out);
+    expect(r.photos).toHaveLength(1);
+    expect(r.photos[0].title).toBe("Bo Suu Tap.txt");
+    expect(r.photos[0].file).toBe(join(out, "01-bo-suu-tap.jpg"));
+    expect(r.failures).toEqual([{ input: dir, reason: `Không phải file: ${dir}` }]);
   });
 });
